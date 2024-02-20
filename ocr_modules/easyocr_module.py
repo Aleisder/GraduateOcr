@@ -10,8 +10,7 @@ class EasyOcrModule(AbstractOcrModule):
         self.reader = Reader(lang_list=['ru'])
 
     def recognize_text(self, image):
-        logging.debug('performing recognition in EasyOCR Module')
-
+        print("EasyOCR is translating...")
         img_byte_arr = io.BytesIO()
         image.save(img_byte_arr, format='PNG')
         image_bytes = img_byte_arr.getvalue()
