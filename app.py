@@ -13,6 +13,7 @@ from dash_iconify import DashIconify
 from dash_mantine_components import Textarea, NotificationsProvider, Notification, Group
 from pdf2image import convert_from_bytes
 
+import assessment
 from assessment import get_page_analytics
 from components import FileUpload, ChooseOcrDropDown
 from components import show_notification
@@ -48,16 +49,16 @@ app.layout = NotificationsProvider(
                 className=FLEX_CONTAINER,
                 children=[
                     FileUpload,
-                    ChooseOcrDropDown,
-                    Div(
-                        id='test3',
-                        className=FLEX_ITEM,
-                        children=Button(
-                            id='analyze',
-                            className=BUTTON_ASSESSMENT,
-                            children='MAKE RECOGNITION'
-                        )
-                    )
+                    ChooseOcrDropDown
+                    # Div(
+                    #     id='test3',
+                    #     className=FLEX_ITEM,
+                    #     children=Button(
+                    #         id='analyze',
+                    #         className=BUTTON_ASSESSMENT,
+                    #         children='MAKE RECOGNITION'
+                    #     )
+                    # )
                 ]
             ),
             Br(),
@@ -86,10 +87,18 @@ app.layout = NotificationsProvider(
                             align='center',
                             grow=True
                         ),
-                        H3(
-                            id='fgkljf',
-                            children=''
-                        )
+                        dcc.Graph(
+                            id='cer-wer-histogram',
+                            # figure={
+                            #     'data': [
+                            #         {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
+                            #         {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': 'Montréal'},
+                            #     ],
+                            #     'layout': {
+                            #         'title': 'Dash Data Visualization'
+                            #     }
+                            # }
+                        ),
                     ])
 
                 ]
@@ -110,17 +119,6 @@ app.layout = NotificationsProvider(
                             y='CER',
                         ),
                         responsive=False
-                    ),
-                    dcc.Graph(
-                        figure={
-                            'data': [
-                                {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
-                                {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': 'Montréal'},
-                            ],
-                            'layout': {
-                                'title': 'Dash Data Visualization'
-                            }
-                        }
                     ),
                     dcc.Graph(
                         figure=px.histogram(
@@ -180,6 +178,7 @@ def invalid_format_error():
     Output('reference-textarea', 'value'),
     Output('experimental-textarea', 'value'),
     Output('notification-container', 'children'),
+    Output('cer-wer-histogram', 'figure'),
     Input('upload-data', 'contents'),
     State('upload-data', 'filename'),
 )
@@ -188,10 +187,21 @@ def update_output(file, filename):
         raise PreventUpdate
     if 'pdf' in filename:
         ref, exp = parse_contents(file)
-        return ref, exp, no_update
+        wer, cer = assessment.get_page_analytics(ref, exp)
+        figure = {
+            'data': [
+                {'x': ['Словесное сравнение (WER)', ' Символьное CER'], 'y': [1, 1], 'type': 'bar', 'name': 'Эталон'},
+                {'x': ['Словесное сравнение (WER)', ' Символьное CER'], 'y': [wer, cer], 'type': 'bar', 'name': 'Экспериментальное'},
+            ],
+            'layout': {
+                'title': 'Сравнение результатов распознавания'
+            }
+        }
+
+        return ref, exp, no_update, figure
     return no_update, no_update, show_notification('Invalid file format',
                                                    'Only PDF files are allowed. Please, try again',
-                                                   'material-symbols:error-outline')
+                                                   'material-symbols:error-outline'), no_update
 
 
 if __name__ == '__main__':
