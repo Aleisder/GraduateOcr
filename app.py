@@ -4,7 +4,7 @@ import dash
 import pandas
 import plotly.express as px
 import plotly.graph_objs as go
-from dash import dcc, callback, Output, Input, no_update
+from dash import dcc, callback, Output, Input, no_update, State
 from dash.dcc import Loading
 from dash.exceptions import PreventUpdate
 from dash.html import Div, Br, H3, Button
@@ -33,7 +33,7 @@ style = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__)
 ocr_service = OcrService(
     reference=PytesseractModule(),
-    experimental=EasyOcrModule()
+    experimental=PytesseractModule()
 )
 
 app.layout = NotificationsProvider(
@@ -61,7 +61,6 @@ app.layout = NotificationsProvider(
                 ]
             ),
             Br(),
-            H3(id='page_amount', children='0'),
             Loading(
                 id='loading-container',
                 children=[
@@ -70,14 +69,14 @@ app.layout = NotificationsProvider(
                             children=[
                                 Textarea(
                                     id=REF_TEXTAREA,
-                                    label='Reference',
+                                    label='Эталонное распознание',
                                     autosize=True,
                                     maxRows=20,
                                     size='xl',
                                 ),
                                 Textarea(
-                                    id=EXP_TEXTAREA,
-                                    label='Experimental',
+                                    id='experimental-textarea',
+                                    label='Экспериментальное распознание',
                                     autosize=True,
                                     maxRows=20,
                                     size='xl',
@@ -163,9 +162,7 @@ def parse_contents(file):
         cer_arr.append(cer)
         wer_arr.append(wer)
         reference += ref_page
-        exp_page += exp_page
-    print(cer_arr)
-    print(wer_arr)
+        experimental += exp_page
     return reference, experimental
 
 
@@ -183,12 +180,13 @@ def invalid_format_error():
     Output('reference-textarea', 'value'),
     Output('experimental-textarea', 'value'),
     Output('notification-container', 'children'),
-    Input('upload-data', 'contents')
+    Input('upload-data', 'contents'),
+    State('upload-data', 'filename'),
 )
-def update_output(file):
+def update_output(file, filename):
     if file is None:
         raise PreventUpdate
-    if 'pdf' in file:
+    if 'pdf' in filename:
         ref, exp = parse_contents(file)
         return ref, exp, no_update
     return no_update, no_update, show_notification('Invalid file format',
