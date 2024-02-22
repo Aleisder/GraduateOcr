@@ -1,13 +1,13 @@
 import base64
 
 import dash
+import dash_mantine_components
 import pandas
 import plotly.express as px
-import plotly.graph_objs as go
 from dash import dcc, callback, Output, Input, no_update, State
 from dash.dcc import Loading
 from dash.exceptions import PreventUpdate
-from dash.html import Div, Br, H3, Button
+from dash.html import Div, Br
 from dash_bootstrap_components import Spinner
 from dash_iconify import DashIconify
 from dash_mantine_components import Textarea, NotificationsProvider, Notification, Group
@@ -18,9 +18,9 @@ from assessment import get_page_analytics
 from components import FileUpload, ChooseOcrDropDown
 from components import show_notification
 from config import POPPLER_PATH
-from ocr_modules.easyocr_module import EasyOcrModule
 from ocr_modules.pytesseract_module import PytesseractModule
 from ocr_service import OcrService
+from assets import dash_styles
 
 LOADING_SPINNER = 'loading-spinner'
 REF_TEXTAREA = 'reference-textarea'
@@ -32,6 +32,7 @@ DROPDOWN_OCR_MODULE = 'dropdown-ocr-module'
 
 style = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__)
+
 ocr_service = OcrService(
     reference=PytesseractModule(),
     experimental=PytesseractModule()
@@ -45,61 +46,83 @@ app.layout = NotificationsProvider(
             Div(id='notification-container'),
             Spinner(id=LOADING_SPINNER),
             Div(
-                id='panel-container',
-                className=FLEX_CONTAINER,
+                id='border-containera',
+                className='border-container',
                 children=[
-                    FileUpload,
-                    ChooseOcrDropDown
-                    # Div(
-                    #     id='test3',
-                    #     className=FLEX_ITEM,
-                    #     children=Button(
-                    #         id='analyze',
-                    #         className=BUTTON_ASSESSMENT,
-                    #         children='MAKE RECOGNITION'
-                    #     )
-                    # )
+                    Div(
+                        id='panel-container',
+                        className=FLEX_CONTAINER,
+                        children=[
+                            FileUpload,
+                            ChooseOcrDropDown
+                        ]
+                    ),
+                    dash_mantine_components.Highlight(
+                        'Heello',
+                        highlight=['e'],
+                        highlightColor='green'
+                    ),
+                    Div(
+                        id='asdsdfhhff',
+                        children=[
+                            dash.html.Span('sadf'),
+                            dash.html.Span(
+                                children='s',
+                                style=dash_styles.wrong_symbol
+                            ),
+                            dash.html.Span(
+                                children='d',
+                                style=dash_styles.wrong_symbol
+                            ),
+                            dash.html.Span(
+                                children='f',
+                                style=dash_styles.wrong_symbol
+                            )
+                        ]
+                    )
                 ]
             ),
             Br(),
             Loading(
                 id='loading-container',
                 children=[
-                    Div([
-                        Group(
-                            children=[
-                                Textarea(
-                                    id=REF_TEXTAREA,
-                                    label='Эталонное распознание',
-                                    autosize=True,
-                                    maxRows=20,
-                                    size='xl',
-                                ),
-                                Textarea(
-                                    id='experimental-textarea',
-                                    label='Экспериментальное распознание',
-                                    autosize=True,
-                                    maxRows=20,
-                                    size='xl',
-                                )
-                            ],
-                            spacing=20,
-                            align='center',
-                            grow=True
-                        ),
-                        dcc.Graph(
-                            id='cer-wer-histogram',
-                            # figure={
-                            #     'data': [
-                            #         {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
-                            #         {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': 'Montréal'},
-                            #     ],
-                            #     'layout': {
-                            #         'title': 'Dash Data Visualization'
-                            #     }
-                            # }
-                        ),
-                    ])
+                    Div(
+                        className='border-container',
+                        children=[
+                            Group(
+                                children=[
+                                    Textarea(
+                                        id=REF_TEXTAREA,
+                                        label='Эталонное распознание',
+                                        autosize=True,
+                                        maxRows=20,
+                                        size='xl',
+                                    ),
+                                    Textarea(
+                                        id='experimental-textarea',
+                                        label='Экспериментальное распознание',
+                                        autosize=True,
+                                        maxRows=20,
+                                        size='xl',
+                                    )
+                                ],
+                                spacing=20,
+                                align='center',
+                                grow=True
+                            ),
+                            dcc.Graph(
+                                id='cer-wer-histogram',
+                                # figure={
+                                #     'data': [
+                                #         {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
+                                #         {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': 'Montréal'},
+                                #     ],
+                                #     'layout': {
+                                #         'title': 'Dash Data Visualization'
+                                #     }
+                                # }
+                            ),
+                        ])
 
                 ]
             ),
@@ -130,9 +153,6 @@ app.layout = NotificationsProvider(
                             y='CER',
                             nbins=1
                         )
-                    ),
-                    dcc.Graph(
-                        figure=go.Figure(data=go.Line(x=[1, 2, 3, 4], y=[0.76, 0.81, 0.91, 0.97]))
                     )
                 ]
             )
@@ -191,7 +211,8 @@ def update_output(file, filename):
         figure = {
             'data': [
                 {'x': ['Словесное сравнение (WER)', ' Символьное CER'], 'y': [1, 1], 'type': 'bar', 'name': 'Эталон'},
-                {'x': ['Словесное сравнение (WER)', ' Символьное CER'], 'y': [wer, cer], 'type': 'bar', 'name': 'Экспериментальное'},
+                {'x': ['Словесное сравнение (WER)', ' Символьное CER'], 'y': [wer, cer], 'type': 'bar',
+                 'name': 'Экспериментальное'},
             ],
             'layout': {
                 'title': 'Сравнение результатов распознавания'

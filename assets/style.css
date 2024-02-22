@@ -9,8 +9,10 @@
 }
 
 .main-container {
-    padding: 40px;
-    width: 100%
+    width: 100%;
+    margin: 0;
+    left: 0;
+    right 0;
 }
 
 .flex-container {
@@ -51,4 +53,11 @@
     width: 40px;
     height: 40px;
     padding: 20px;
+}
+
+.border-container {
+    border: solid #119DFF;
+    border-radius: 25px;
+    padding: 20px;
+    margin: 30px;
 }

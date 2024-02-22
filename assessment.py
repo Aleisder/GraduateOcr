@@ -1,5 +1,6 @@
 from jiwer import cer, wer
 from difflib import context_diff
+import difflib
 
 
 def get_page_analytics(reference: str, hypothesis: str):
@@ -14,3 +15,19 @@ def get_page_analytics(reference: str, hypothesis: str):
 #
 # print(wer)
 # print(cer)
+
+
+def compare_strings(str1, str2):
+    # Use difflib to compare the encoded strings
+    differ = difflib.Differ()
+    diff = differ.compare(str1, str2)
+    # Print the differences
+    print(type(diff))
+    for line in diff:
+        print(line)
+    # Example usage
+
+
+string1 = "Hello"
+string2 = "Hëpllo"
+compare_strings(string1, string2)
