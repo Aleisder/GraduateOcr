@@ -1,33 +1,16 @@
 from jiwer import cer, wer
-from difflib import context_diff
-import difflib
 
 
 def get_page_analytics(reference: str, hypothesis: str):
     return wer(reference, hypothesis), cer(reference, hypothesis)
 
-#
-# reference = 'User is making somee shit'
-# hypo = 'User i makin somet shit'
-#
-# wer = wer(reference, hypo)
-# cer = cer(reference, hypo, return_dict=True)
-#
-# print(wer)
-# print(cer)
+
+reference = '細かい部分を描く前に必要な全ての図が描けるようにまず全体の配置を決定する'
+hypo = '細かい部分を描く前に 必要な全ての図が描けるように ますず全体の配置を決定する'
 
 
-def compare_strings(str1, str2):
-    # Use difflib to compare the encoded strings
-    differ = difflib.Differ()
-    diff = differ.compare(str1, str2)
-    # Print the differences
-    print(type(diff))
-    for line in diff:
-        print(line)
-    # Example usage
+wer = wer(reference, hypo)
+cer = cer(reference, hypo, return_dict=True)
 
-
-string1 = "Hello"
-string2 = "Hëpllo"
-compare_strings(string1, string2)
+print(wer)
+print(cer)

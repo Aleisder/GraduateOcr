@@ -1,7 +1,6 @@
 @font-face {
-    font-family: "Montserrat";
-    src:
-        url("/fonts/Montserrat-Regular.ttf") format("ttf")
+font-family: "Montserrat";
+src: url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap')
 }
 
 .notification {
@@ -12,7 +11,7 @@
     width: 100%;
     margin: 0;
     left: 0;
-    right 0;
+right 0;
 }
 
 .flex-container {
@@ -60,4 +59,14 @@
     border-radius: 25px;
     padding: 20px;
     margin: 30px;
+}
+
+.recognized-text-container {
+    min-height: 100px;
+    max-height: 700px;
+    border-radius: 25px;
+    padding: 20px;
+    border: solid #CED4DA;
+    overflow-x: hidden;
+    overflow-y: auto;
 }

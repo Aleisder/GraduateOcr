@@ -43,6 +43,12 @@ data = """
 
 橋スレニ決海ょゆ授決ぴふッ関1航ステヱウ近便けあくで炎意ひぜへ金晴ま子打氏ぼリん人安じだをめ種書タ別仕ラマ善9平ツレタ山授ヤニヨ道使少婦項ゅもほ。報らンぜく末19後うに新59感は歴双ムヱ乗刺ミトクメ植止康無ごへす獲合ゃほけっ鳥質サ態夜ぎね鳥健ぼで野供テ藤掲ホケ定生ワトユ球職カ祝派彼精ぴ。牛じか顔野埼討のが覧93理ぞ俳署作チ止独コヤ真形河稿育まばスと模負観せん。"""
 
+data1 = '''細かい部分を描く前に
+必要な全ての図が描けるように
+まず全体の配置を決定する
+'''
+
+
 class OcrService(OcrServiceAbstract):
     def __init__(self, reference: OcrModule, experimental: OcrModule):
         self.reference_module = reference

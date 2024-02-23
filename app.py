@@ -1,26 +1,24 @@
 import base64
 
 import dash
-import dash_mantine_components
 import pandas
 import plotly.express as px
 from dash import dcc, callback, Output, Input, no_update, State
+from dash import html
 from dash.dcc import Loading
 from dash.exceptions import PreventUpdate
 from dash.html import Div, Br
 from dash_bootstrap_components import Spinner
 from dash_iconify import DashIconify
-from dash_mantine_components import Textarea, NotificationsProvider, Notification, Group
+from dash_mantine_components import NotificationsProvider, Notification, Group
 from pdf2image import convert_from_bytes
 
-import assessment
-from assessment import get_page_analytics
+import utils.colored_text_builder
 from components import FileUpload, ChooseOcrDropDown
 from components import show_notification
 from config import POPPLER_PATH
 from ocr_modules.pytesseract_module import PytesseractModule
 from ocr_service import OcrService
-from assets import dash_styles
 
 LOADING_SPINNER = 'loading-spinner'
 REF_TEXTAREA = 'reference-textarea'
@@ -56,29 +54,6 @@ app.layout = NotificationsProvider(
                             FileUpload,
                             ChooseOcrDropDown
                         ]
-                    ),
-                    dash_mantine_components.Highlight(
-                        'Heello',
-                        highlight=['e'],
-                        highlightColor='green'
-                    ),
-                    Div(
-                        id='asdsdfhhff',
-                        children=[
-                            dash.html.Span('sadf'),
-                            dash.html.Span(
-                                children='s',
-                                style=dash_styles.wrong_symbol
-                            ),
-                            dash.html.Span(
-                                children='d',
-                                style=dash_styles.wrong_symbol
-                            ),
-                            dash.html.Span(
-                                children='f',
-                                style=dash_styles.wrong_symbol
-                            )
-                        ]
                     )
                 ]
             ),
@@ -91,19 +66,29 @@ app.layout = NotificationsProvider(
                         children=[
                             Group(
                                 children=[
-                                    Textarea(
-                                        id=REF_TEXTAREA,
-                                        label='Эталонное распознание',
-                                        autosize=True,
-                                        maxRows=20,
-                                        size='xl',
-                                    ),
-                                    Textarea(
-                                        id='experimental-textarea',
-                                        label='Экспериментальное распознание',
-                                        autosize=True,
-                                        maxRows=20,
-                                        size='xl',
+                                    Div([
+                                        html.H3(
+                                            children='Эталонное решение',
+                                            style={'font-family': 'Montserrat'}
+                                        ),
+                                        Div(
+                                            id='reference-text-div',
+                                            className='recognized-text-container'
+                                        )
+                                    ]),
+                                    Div(
+                                        children=[
+                                            html.H3(
+                                                children='Экспериментальное решение',
+                                                style={
+                                                    'font-family': 'Montserrat'
+                                                }
+                                            ),
+                                            Div(
+                                                id='experimental-text-div',
+                                                className='recognized-text-container'
+                                            )
+                                        ]
                                     )
                                 ],
                                 spacing=20,
@@ -172,13 +157,9 @@ def parse_contents(file):
         poppler_path=POPPLER_PATH
     )
     reference, experimental = '', ''
-    cer_arr, wer_arr = [], []
 
     for image in images:
         ref_page, exp_page = ocr_service.get_recognitions(image)
-        wer, cer = get_page_analytics(ref_page, exp_page)
-        cer_arr.append(cer)
-        wer_arr.append(wer)
         reference += ref_page
         experimental += exp_page
     return reference, experimental
@@ -195,8 +176,8 @@ def invalid_format_error():
 
 
 @callback(
-    Output('reference-textarea', 'value'),
-    Output('experimental-textarea', 'value'),
+    Output('reference-text-div', 'children'),
+    Output('experimental-text-div', 'children'),
     Output('notification-container', 'children'),
     Output('cer-wer-histogram', 'figure'),
     Input('upload-data', 'contents'),
@@ -207,11 +188,11 @@ def update_output(file, filename):
         raise PreventUpdate
     if 'pdf' in filename:
         ref, exp = parse_contents(file)
-        wer, cer = assessment.get_page_analytics(ref, exp)
+        exp_formatted = utils.colored_text_builder.build_from_differ_compare(ref, exp)
         figure = {
             'data': [
                 {'x': ['Словесное сравнение (WER)', ' Символьное CER'], 'y': [1, 1], 'type': 'bar', 'name': 'Эталон'},
-                {'x': ['Словесное сравнение (WER)', ' Символьное CER'], 'y': [wer, cer], 'type': 'bar',
+                {'x': ['Словесное сравнение (WER)', ' Символьное CER'], 'y': [0.3, 0.3], 'type': 'bar',
                  'name': 'Экспериментальное'},
             ],
             'layout': {
@@ -219,7 +200,7 @@ def update_output(file, filename):
             }
         }
 
-        return ref, exp, no_update, figure
+        return ref, exp_formatted, no_update, figure
     return no_update, no_update, show_notification('Invalid file format',
                                                    'Only PDF files are allowed. Please, try again',
                                                    'material-symbols:error-outline'), no_update
