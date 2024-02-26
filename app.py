@@ -1,21 +1,18 @@
 import base64
 
-import dash
+import dash_mantine_components as dmc
 import pandas
 import plotly.express as px
-from dash import dcc, callback, Output, Input, no_update, State
-from dash import html
+from dash import Dash, dcc, callback, Output, Input, no_update, State
 from dash.dcc import Loading
 from dash.exceptions import PreventUpdate
 from dash.html import Div, Br
 from dash_bootstrap_components import Spinner
 from dash_iconify import DashIconify
-from dash_mantine_components import NotificationsProvider, Notification, Group
 from pdf2image import convert_from_bytes
 
 import utils.colored_text_builder
-from components import FileUpload, ChooseOcrDropDown
-from components import show_notification
+from components import FileUpload, show_notification
 from config import POPPLER_PATH
 from ocr_modules.pytesseract_module import PytesseractModule
 from ocr_service import OcrService
@@ -29,14 +26,14 @@ BUTTON_ASSESSMENT = 'button-assessment'
 DROPDOWN_OCR_MODULE = 'dropdown-ocr-module'
 
 style = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(__name__)
+app = Dash(__name__)
 
 ocr_service = OcrService(
     reference=PytesseractModule(),
     experimental=PytesseractModule()
 )
 
-app.layout = NotificationsProvider(
+app.layout = dmc.NotificationsProvider(
     Div(
         id='main-container',
         className='main-container',
@@ -47,14 +44,36 @@ app.layout = NotificationsProvider(
                 id='border-containera',
                 className='border-container',
                 children=[
-                    Div(
-                        id='panel-container',
-                        className=FLEX_CONTAINER,
-                        children=[
+                    dmc.Group(
+
+                        [
                             FileUpload,
-                            ChooseOcrDropDown
-                        ]
-                    )
+                            dmc.MultiSelect(
+                                id='ocr-modules-multi-select',
+                                label='Выберите OCR-инструменты',
+                                data=[
+                                    {'value': 'tesseract', 'label': 'Tesseract'},
+                                    {'value': 'keras', 'label': 'Keras'},
+                                    {'value': 'pyocr', 'label': 'PyOCR'},
+                                ],
+                                value=['tesseract']
+                            ),
+                            dmc.RadioGroup(
+                                id='document-language-radio-group',
+                                children=[
+                                    dmc.Radio('English', 'EN'),
+                                    dmc.Radio('Japanese', 'JPN'),
+                                    dmc.Radio('Chinese', 'CHI')
+                                ],
+                                label='Выберите язык документа',
+                                orientation='vertical'
+                            ),
+                            dmc.Button(
+                                id='recognize-button',
+                                children='Начать распознание',
+                                rightIcon=DashIconify(icon='material-symbols:search')
+                            )
+                        ])
                 ]
             ),
             Br(),
@@ -64,12 +83,24 @@ app.layout = NotificationsProvider(
                     Div(
                         className='border-container',
                         children=[
-                            Group(
+                            dmc.Group(
                                 children=[
                                     Div([
-                                        html.H3(
-                                            children='Эталонное решение',
-                                            style={'font-family': 'Montserrat'}
+                                        dmc.Group(
+                                            position='apart',
+                                            children=[
+                                                dmc.Text('Эталонное решение'),
+                                                dmc.ActionIcon(
+                                                    id='copy-reference-action-button',
+                                                    children=DashIconify(
+                                                        icon='bi:copy',
+                                                        height=18,
+                                                        width=18
+                                                    ),
+                                                    size=24,
+                                                    radius=5
+                                                )
+                                            ]
                                         ),
                                         Div(
                                             id='reference-text-div',
@@ -78,12 +109,7 @@ app.layout = NotificationsProvider(
                                     ]),
                                     Div(
                                         children=[
-                                            html.H3(
-                                                children='Экспериментальное решение',
-                                                style={
-                                                    'font-family': 'Montserrat'
-                                                }
-                                            ),
+                                            dmc.Text('Экспериментальное решение'),
                                             Div(
                                                 id='experimental-text-div',
                                                 className='recognized-text-container'
@@ -166,7 +192,7 @@ def parse_contents(file):
 
 
 def invalid_format_error():
-    return Notification(
+    return dmc.Notification(
         id='invalid_format_notification',
         title='Error',
         message='Only PDF files are allowed',
