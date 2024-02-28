@@ -1,12 +1,13 @@
 import pandas
 from dash import dcc, html, callback, Output, Input, State
+from dash.development.base_component import _explicitize_args, Component
 from dash.exceptions import PreventUpdate
 from dash_iconify import DashIconify
-from dash_mantine_components import Notification, ActionIcon
+import dash_mantine_components as dmc
 
 
 def show_notification(title: str, message: str, icon: str):
-    return Notification(
+    return dmc.Notification(
         id='notification',
         action='show',
         title=title,
@@ -40,13 +41,20 @@ FileUpload = dcc.Upload(
 )
 
 
-class CopyClipboardButton(ActionIcon):
-    def __init__(self, component_id: str, read_from_component_id: str):
-        self.id = component_id
-        self.read_from_component_id = read_from_component_id
+class CopyClipboardButton(dmc.ActionIcon):
+    props = dict()
+
+    def __init__(
+            self,
+            component_id: str,
+            read_from_component_id: str
+    ):
+        self.props['id'] = component_id
+        self.props['read_from'] = read_from_component_id
+
         super().__init__([
-            ActionIcon(
-                id=self.id,
+            dmc.ActionIcon(
+                id=self.props['id'],
                 children=DashIconify(
                     icon='bi:copy',
                     height=18,
@@ -58,14 +66,14 @@ class CopyClipboardButton(ActionIcon):
             )
         ])
 
-    # @callback(
-    #     Output(),
-    #     Input(read_from_component_id, 'children')
-    # )
-    # def copy_to_clipboard(self, text):
-    #     if any([n_clicks, text]) is None:
-    #         raise PreventUpdate
-    #     pandas.DataFrame([text])[0].to_clipboard()
-    #     return None
-
-
+        @callback(
+            Output(self.props['id'], 'display'),
+            Input(self.props['id'], 'n_clicks'),
+            State(self.props['read_from'], 'children'),
+            prevent_initial_call=True
+        )
+        def copy_to_clipboard(n_clicks, text):
+            if any([n_clicks, text]) is None:
+                raise PreventUpdate
+            pandas.DataFrame([text])[0][0].to_clipboard()
+            return Component.UNDEFINED

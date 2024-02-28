@@ -89,19 +89,20 @@ app.layout = dmc.NotificationsProvider(
                                             children=[
                                                 dmc.Text('Эталонное решение'),
                                                 CopyClipboardButton(
-                                                    id='copy-reference-action-button-test',
+                                                    component_id='test2',
+                                                    read_from_component_id='reference-text-div'
                                                 ),
-                                                dmc.ActionIcon(
-                                                    id='copy-reference-action-button',
-                                                    children=DashIconify(
-                                                        icon='bi:copy',
-                                                        height=18,
-                                                        width=18
-                                                    ),
-                                                    size=24,
-                                                    n_clicks=0,
-                                                    radius=5
-                                                )
+                                                # dmc.ActionIcon(
+                                                #     id='copy-reference-action-button',
+                                                #     children=DashIconify(
+                                                #         icon='bi:copy',
+                                                #         height=18,
+                                                #         width=18
+                                                #     ),
+                                                #     size=24,
+                                                #     n_clicks=0,
+                                                #     radius=5
+                                                # )
                                             ]
                                         ),
                                         Div(
@@ -220,7 +221,7 @@ def change_upload_component_content(file, filename):
 @callback(
     Output('reference-text-div', 'children'),
     Output('experimental-text-div', 'children'),
-    Output('notification-container', 'children', allow_duplicate=True),
+    Output('notification-container', 'children'),
     Output('cer-wer-histogram', 'figure'),
     Input('upload-data', 'contents'),
     State('upload-data', 'filename'),
@@ -249,17 +250,17 @@ def update_output(file, filename):
                                                    'material-symbols:error-outline'), no_update
 
 
-@callback(
-    Output('notification-container', 'children', allow_duplicate=True),
-    Input('copy-reference-action-button', 'n_clicks'),
-    State('reference-text-div', 'children'),
-    prevent_initial_call=True
-)
-def copy_to_clipboard(n_clicks, text):
-    if any([n_clicks, text]) is None:
-        raise PreventUpdate
-    pandas.DataFrame([text]).to_clipboard()
-    return None
+# @callback(
+#     Output('notification-container', 'children', allow_duplicate=True),
+#     Input('copy-reference-action-button', 'n_clicks'),
+#     State('reference-text-div', 'children'),
+#     prevent_initial_call=True
+# )
+# def copy_to_clipboard(n_clicks, text):
+#     if any([n_clicks, text]) is None:
+#         raise PreventUpdate
+#     pandas.DataFrame([text]).to_clipboard()
+#     return None
 
 
 if __name__ == '__main__':
