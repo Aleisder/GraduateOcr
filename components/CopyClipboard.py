@@ -1,43 +1,8 @@
 import dash_mantine_components as dmc
 import pyperclip
-from dash import dcc, html, callback, Output, Input, State, no_update
+from dash import no_update, State
 from dash.exceptions import PreventUpdate
 from dash_iconify import DashIconify
-
-
-def show_notification(title: str, message: str, icon: str):
-    return dmc.Notification(
-        id='notification',
-        action='show',
-        title=title,
-        message=message,
-        icon=DashIconify(icon=icon),
-        styles={
-            'body': {'width': '100%'},
-            'title': {'fontSize': '36sp'}
-        }
-    )
-
-
-FileUpload = dcc.Upload(
-    id='upload-data',
-    children=html.Div([
-        'Перетащите файл или ',
-        html.A('Выберите его', style={'color': '#119DFF'})
-    ]),
-    style={
-        'width': '250px',
-        'height': '60px',
-        'lineHeight': '60px',
-        'borderWidth': '1px',
-        'borderStyle': 'dashed',
-        'borderRadius': '5px',
-        'textAlign': 'center',
-        'margin': '10px'
-    },
-    # Allow multiple files to be uploaded
-    multiple=False
-)
 
 
 class CopyClipboardButton(dmc.ActionIcon):
