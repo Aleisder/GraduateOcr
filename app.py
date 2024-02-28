@@ -6,13 +6,13 @@ import plotly.express as px
 from dash import Dash, dcc, callback, Output, Input, no_update, State
 from dash.dcc import Loading
 from dash.exceptions import PreventUpdate
-from dash.html import Div, Br
+from dash.html import Div
 from dash_bootstrap_components import Spinner
 from dash_iconify import DashIconify
 from pdf2image import convert_from_bytes
 
 import utils.colored_text_builder
-from components import FileUpload, show_notification
+from components import FileUpload, show_notification, CopyClipboardButton
 from config import POPPLER_PATH
 from ocr_modules.pytesseract_module import PytesseractModule
 from ocr_service import OcrService
@@ -45,7 +45,6 @@ app.layout = dmc.NotificationsProvider(
                 className='border-container',
                 children=[
                     dmc.Group(
-
                         [
                             FileUpload,
                             dmc.MultiSelect(
@@ -76,7 +75,6 @@ app.layout = dmc.NotificationsProvider(
                         ])
                 ]
             ),
-            Br(),
             Loading(
                 id='loading-container',
                 children=[
@@ -90,6 +88,9 @@ app.layout = dmc.NotificationsProvider(
                                             position='apart',
                                             children=[
                                                 dmc.Text('Эталонное решение'),
+                                                CopyClipboardButton(
+                                                    id='copy-reference-action-button-test',
+                                                ),
                                                 dmc.ActionIcon(
                                                     id='copy-reference-action-button',
                                                     children=DashIconify(
@@ -98,6 +99,7 @@ app.layout = dmc.NotificationsProvider(
                                                         width=18
                                                     ),
                                                     size=24,
+                                                    n_clicks=0,
                                                     radius=5
                                                 )
                                             ]
@@ -202,12 +204,27 @@ def invalid_format_error():
 
 
 @callback(
+    Output('upload-data', 'children'),
+    Input('upload-data', 'contents'),
+    State('upload-data', 'filename'),
+)
+def change_upload_component_content(file, filename):
+    if file is None:
+        raise PreventUpdate
+    return dmc.Group([
+        DashIconify(icon='bi:check'),
+        dmc.Text(filename)
+    ])
+
+
+@callback(
     Output('reference-text-div', 'children'),
     Output('experimental-text-div', 'children'),
-    Output('notification-container', 'children'),
+    Output('notification-container', 'children', allow_duplicate=True),
     Output('cer-wer-histogram', 'figure'),
     Input('upload-data', 'contents'),
     State('upload-data', 'filename'),
+    prevent_initial_call=True
 )
 def update_output(file, filename):
     if file is None:
@@ -230,6 +247,19 @@ def update_output(file, filename):
     return no_update, no_update, show_notification('Invalid file format',
                                                    'Only PDF files are allowed. Please, try again',
                                                    'material-symbols:error-outline'), no_update
+
+
+@callback(
+    Output('notification-container', 'children', allow_duplicate=True),
+    Input('copy-reference-action-button', 'n_clicks'),
+    State('reference-text-div', 'children'),
+    prevent_initial_call=True
+)
+def copy_to_clipboard(n_clicks, text):
+    if any([n_clicks, text]) is None:
+        raise PreventUpdate
+    pandas.DataFrame([text]).to_clipboard()
+    return None
 
 
 if __name__ == '__main__':

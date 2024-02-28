@@ -23,28 +23,6 @@ src: url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..9
     padding: 1.5em;
 }
 
-.upload-component {
-    width: 10%;
-    height: 60px;
-    lineHeight: 60px;
-    borderWidth: 1px;
-    borderStyle: dashed;
-    borderRadius: 5px;
-    textAlign: center;
-    margin: 10px
-}
-
-.button-assessment {
-    font-size: 20px;
-    border: none;
-    background-color: #119DFF;
-    color: white;
-    padding: 15px 32px;
-    border-radius: 15px;
-    font-family: Montserrat;
-    font-weight: bold
-}
-
 .icon-container {
     background-color: #119DFF;
     align-content: center

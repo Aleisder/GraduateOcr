@@ -1,4 +1,6 @@
-from dash import dcc, html
+import pandas
+from dash import dcc, html, callback, Output, Input, State
+from dash.exceptions import PreventUpdate
 from dash_iconify import DashIconify
 from dash_mantine_components import Notification, ActionIcon
 
@@ -24,7 +26,7 @@ FileUpload = dcc.Upload(
         html.A('Выберите его', style={'color': '#119DFF'})
     ]),
     style={
-        'width': '100%',
+        'width': '250px',
         'height': '60px',
         'lineHeight': '60px',
         'borderWidth': '1px',
@@ -36,3 +38,34 @@ FileUpload = dcc.Upload(
     # Allow multiple files to be uploaded
     multiple=False
 )
+
+
+class CopyClipboardButton(ActionIcon):
+    def __init__(self, component_id: str, read_from_component_id: str):
+        self.id = component_id
+        self.read_from_component_id = read_from_component_id
+        super().__init__([
+            ActionIcon(
+                id=self.id,
+                children=DashIconify(
+                    icon='bi:copy',
+                    height=18,
+                    width=18
+                ),
+                size=24,
+                n_clicks=0,
+                radius=5
+            )
+        ])
+
+    # @callback(
+    #     Output(),
+    #     Input(read_from_component_id, 'children')
+    # )
+    # def copy_to_clipboard(self, text):
+    #     if any([n_clicks, text]) is None:
+    #         raise PreventUpdate
+    #     pandas.DataFrame([text])[0].to_clipboard()
+    #     return None
+
+
