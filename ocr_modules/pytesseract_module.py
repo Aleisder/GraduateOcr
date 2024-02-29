@@ -14,6 +14,6 @@ class PytesseractModule(AbstractOcrModule):
         logging.debug('performing recognition in Pytesseract Module')
         return image_to_string(
             image=image,
-            lang='jpn',
+            lang='eng',
             config=self.config
         )

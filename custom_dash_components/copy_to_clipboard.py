@@ -1,6 +1,6 @@
 import dash_mantine_components as dmc
 import pyperclip
-from dash import no_update, State
+from dash import no_update, State, callback, Output, Input
 from dash.exceptions import PreventUpdate
 from dash_iconify import DashIconify
 

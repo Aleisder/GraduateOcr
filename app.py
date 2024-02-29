@@ -12,8 +12,8 @@ from dash_iconify import DashIconify
 from pdf2image import convert_from_bytes
 
 import utils.colored_text_builder
-from components import FileUpload, show_notification, CopyClipboardButton
 from config import POPPLER_PATH
+from custom_dash_components import CopyClipboardButton, FileUpload
 from ocr_modules.pytesseract_module import PytesseractModule
 from ocr_service import OcrService
 
@@ -46,7 +46,9 @@ app.layout = dmc.NotificationsProvider(
                 children=[
                     dmc.Group(
                         [
-                            FileUpload,
+                            FileUpload(
+                                component_id='upload-data'
+                            ),
                             dmc.MultiSelect(
                                 id='ocr-modules-multi-select',
                                 label='Выберите OCR-инструменты',
@@ -91,18 +93,7 @@ app.layout = dmc.NotificationsProvider(
                                                 CopyClipboardButton(
                                                     component_id='test2',
                                                     read_from_component_id='reference-text-div'
-                                                ),
-                                                # dmc.ActionIcon(
-                                                #     id='copy-reference-action-button',
-                                                #     children=DashIconify(
-                                                #         icon='bi:copy',
-                                                #         height=18,
-                                                #         width=18
-                                                #     ),
-                                                #     size=24,
-                                                #     n_clicks=0,
-                                                #     radius=5
-                                                # )
+                                                )
                                             ]
                                         ),
                                         Div(
@@ -194,30 +185,6 @@ def parse_contents(file):
     return reference, experimental
 
 
-def invalid_format_error():
-    return dmc.Notification(
-        id='invalid_format_notification',
-        title='Error',
-        message='Only PDF files are allowed',
-        action='show',
-        icon=DashIconify(icon='ic:round-celebration')
-    )
-
-
-@callback(
-    Output('upload-data', 'children'),
-    Input('upload-data', 'contents'),
-    State('upload-data', 'filename'),
-)
-def change_upload_component_content(file, filename):
-    if file is None:
-        raise PreventUpdate
-    return dmc.Group([
-        DashIconify(icon='bi:check'),
-        dmc.Text(filename)
-    ])
-
-
 @callback(
     Output('reference-text-div', 'children'),
     Output('experimental-text-div', 'children'),
@@ -245,22 +212,17 @@ def update_output(file, filename):
         }
 
         return ref, exp_formatted, no_update, figure
-    return no_update, no_update, show_notification('Invalid file format',
-                                                   'Only PDF files are allowed. Please, try again',
-                                                   'material-symbols:error-outline'), no_update
-
-
-# @callback(
-#     Output('notification-container', 'children', allow_duplicate=True),
-#     Input('copy-reference-action-button', 'n_clicks'),
-#     State('reference-text-div', 'children'),
-#     prevent_initial_call=True
-# )
-# def copy_to_clipboard(n_clicks, text):
-#     if any([n_clicks, text]) is None:
-#         raise PreventUpdate
-#     pandas.DataFrame([text]).to_clipboard()
-#     return None
+    return no_update, no_update, dmc.Notification(
+        id='notification',
+        action='show',
+        title='Invalid file format',
+        message='Only PDF files are allowed. Please, try again',
+        icon=DashIconify(icon='material-symbols:error-outline'),
+        styles={
+            'body': {'width': '100%'},
+            'title': {'fontSize': '36sp'}
+        }
+    ), no_update
 
 
 if __name__ == '__main__':
