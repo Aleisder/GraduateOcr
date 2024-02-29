@@ -237,46 +237,6 @@ def recognize_button_click(n_clicks, file, filename):
     ), no_update
 
 
-# @callback(
-#     Output('reference-text-div', 'children'),
-#     Output('experimental-text-div', 'children'),
-#     Output('notification-container', 'children'),
-#     Output('cer-wer-histogram', 'figure'),
-#     Input('upload-data', 'contents'),
-#     State('upload-data', 'filename'),
-#     prevent_initial_call=True
-# )
-# def update_output(file, filename):
-#     if file is None:
-#         raise PreventUpdate
-#     if 'pdf' in filename:
-#         ref, exp = parse_contents(file)
-#         exp_formatted = utils.colored_text_builder.build_from_differ_compare(ref, exp)
-#         figure = {
-#             'data': [
-#                 {'x': ['Словесное сравнение (WER)', ' Символьное CER'], 'y': [1, 1], 'type': 'bar', 'name': 'Эталон'},
-#                 {'x': ['Словесное сравнение (WER)', ' Символьное CER'], 'y': [0.3, 0.3], 'type': 'bar',
-#                  'name': 'Экспериментальное'},
-#             ],
-#             'layout': {
-#                 'title': 'Сравнение результатов распознавания'
-#             }
-#         }
-#
-#         return ref, exp_formatted, no_update, figure
-#     return no_update, no_update, dmc.Notification(
-#         id='notification',
-#         action='show',
-#         title='Invalid file format',
-#         message='Only PDF files are allowed. Please, try again',
-#         icon=DashIconify(icon='material-symbols:error-outline'),
-#         styles={
-#             'body': {'width': '100%'},
-#             'title': {'fontSize': '36sp'}
-#         }
-#     ), no_update
-
-
 if __name__ == '__main__':
     app.run(
         debug=True,
