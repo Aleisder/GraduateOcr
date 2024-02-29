@@ -63,7 +63,7 @@ class OcrService(OcrServiceAbstract):
     def get_recognitions(self, image):
         reference = data3
         # experimental = self.experimental_module.recognize_text(image)
-        experimental = self.experimental_module.recognize_text(image).replace(' ', '')
+        experimental = self.experimental_module.recognize_text(image).replace('  ', ' ')
         return reference, experimental
 
     def set_reference_ocr_module(self, module: OcrModule):

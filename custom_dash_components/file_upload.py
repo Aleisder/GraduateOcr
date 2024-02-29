@@ -18,11 +18,6 @@ class FileUpload(dcc.Upload):
                 children=html.Div([
                     'Перетащите файл или ',
                     html.A('Выберите его', style={'color': '#119DFF'}),
-                    dmc.ActionIcon(
-                        id='delete-file-action-icon',
-                        children=[DashIconify(icon='streamline:delete-1-solid')],
-                        opacity=100
-                    )
                 ]),
                 style={
                     'width': '250px',
@@ -41,7 +36,8 @@ class FileUpload(dcc.Upload):
         @callback(
             Output(self.props['id'], 'children'),
             Input(self.props['id'], 'contents'),
-            State(self.props['id'], 'filename')
+            State(self.props['id'], 'filename'),
+            allow_duplicate=True
         )
         def change_content(file, filename):
             if file is None:
@@ -53,16 +49,4 @@ class FileUpload(dcc.Upload):
                     id='delete-file-action-icon',
                     children=[DashIconify(icon='streamline:delete-1-solid')]
                 )
-            ])
-
-        @callback(
-            Output(self.props['id'], 'contents'),
-            Input('delete-file-action-icon', 'n_clicks')
-        )
-        def delete_file(n_clicks):
-            if n_clicks is None:
-                raise PreventUpdate
-            return html.Div([
-                'Перетащите файл или ',
-                html.A('Выберите его', style={'color': '#119DFF'})
             ])

@@ -3,7 +3,7 @@ import base64
 import dash_mantine_components as dmc
 import pandas
 import plotly.express as px
-from dash import Dash, dcc, callback, Output, Input, no_update, State
+from dash import Dash, dcc, callback, Output, Input, no_update, State, html
 from dash.dcc import Loading
 from dash.exceptions import PreventUpdate
 from dash.html import Div
@@ -11,19 +11,11 @@ from dash_bootstrap_components import Spinner
 from dash_iconify import DashIconify
 from pdf2image import convert_from_bytes
 
+import custom_dash_components as cdc
 import utils.colored_text_builder
 from config import POPPLER_PATH
-from custom_dash_components import CopyClipboardButton, FileUpload
 from ocr_modules.pytesseract_module import PytesseractModule
 from ocr_service import OcrService
-
-# LOADING_SPINNER = 'loading-spinner'
-# REF_TEXTAREA = 'reference-textarea'
-# EXP_TEXTAREA = 'experimental-textarea'
-# FLEX_CONTAINER = 'flex-container'
-# FLEX_ITEM = 'flex-item'
-# BUTTON_ASSESSMENT = 'button-assessment'
-# DROPDOWN_OCR_MODULE = 'dropdown-ocr-module'
 
 style = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = Dash(__name__)
@@ -46,8 +38,12 @@ app.layout = dmc.NotificationsProvider(
                 children=[
                     dmc.Group(
                         [
-                            FileUpload(
+                            cdc.FileUpload(
                                 component_id='upload-data'
+                            ),
+                            dmc.ActionIcon(
+                                id='delete-file-action-icon',
+                                children=[DashIconify(icon='streamline:delete-1-solid')]
                             ),
                             dmc.MultiSelect(
                                 id='ocr-modules-multi-select',
@@ -90,7 +86,7 @@ app.layout = dmc.NotificationsProvider(
                                             position='apart',
                                             children=[
                                                 dmc.Text('Эталонное решение'),
-                                                CopyClipboardButton(
+                                                cdc.CopyClipboardButton(
                                                     component_id='test2',
                                                     read_from_component_id='reference-text-div'
                                                 )
