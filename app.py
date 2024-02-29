@@ -17,13 +17,13 @@ from custom_dash_components import CopyClipboardButton, FileUpload
 from ocr_modules.pytesseract_module import PytesseractModule
 from ocr_service import OcrService
 
-LOADING_SPINNER = 'loading-spinner'
-REF_TEXTAREA = 'reference-textarea'
-EXP_TEXTAREA = 'experimental-textarea'
-FLEX_CONTAINER = 'flex-container'
-FLEX_ITEM = 'flex-item'
-BUTTON_ASSESSMENT = 'button-assessment'
-DROPDOWN_OCR_MODULE = 'dropdown-ocr-module'
+# LOADING_SPINNER = 'loading-spinner'
+# REF_TEXTAREA = 'reference-textarea'
+# EXP_TEXTAREA = 'experimental-textarea'
+# FLEX_CONTAINER = 'flex-container'
+# FLEX_ITEM = 'flex-item'
+# BUTTON_ASSESSMENT = 'button-assessment'
+# DROPDOWN_OCR_MODULE = 'dropdown-ocr-module'
 
 style = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = Dash(__name__)
@@ -39,7 +39,7 @@ app.layout = dmc.NotificationsProvider(
         className='main-container',
         children=[
             Div(id='notification-container'),
-            Spinner(id=LOADING_SPINNER),
+            Spinner(id='loading-spinner'),
             Div(
                 id='border-containera',
                 className='border-container',
@@ -186,16 +186,28 @@ def parse_contents(file):
 
 
 @callback(
+    Output('recognize-button', 'disabled'),
+    Input('document-language-radio-group', 'value'),
+    State('upload-data', 'contents')
+)
+def update_button_state(value, file):
+    if file is None:
+        return True
+    return value is None
+
+
+@callback(
     Output('reference-text-div', 'children'),
     Output('experimental-text-div', 'children'),
     Output('notification-container', 'children'),
     Output('cer-wer-histogram', 'figure'),
-    Input('upload-data', 'contents'),
+    Input('recognize-button', 'n_clicks'),
+    State('upload-data', 'contents'),
     State('upload-data', 'filename'),
     prevent_initial_call=True
 )
-def update_output(file, filename):
-    if file is None:
+def recognize_button_click(n_clicks, file, filename):
+    if any([n_clicks, file, filename]) is None:
         raise PreventUpdate
     if 'pdf' in filename:
         ref, exp = parse_contents(file)
@@ -223,6 +235,46 @@ def update_output(file, filename):
             'title': {'fontSize': '36sp'}
         }
     ), no_update
+
+
+# @callback(
+#     Output('reference-text-div', 'children'),
+#     Output('experimental-text-div', 'children'),
+#     Output('notification-container', 'children'),
+#     Output('cer-wer-histogram', 'figure'),
+#     Input('upload-data', 'contents'),
+#     State('upload-data', 'filename'),
+#     prevent_initial_call=True
+# )
+# def update_output(file, filename):
+#     if file is None:
+#         raise PreventUpdate
+#     if 'pdf' in filename:
+#         ref, exp = parse_contents(file)
+#         exp_formatted = utils.colored_text_builder.build_from_differ_compare(ref, exp)
+#         figure = {
+#             'data': [
+#                 {'x': ['Словесное сравнение (WER)', ' Символьное CER'], 'y': [1, 1], 'type': 'bar', 'name': 'Эталон'},
+#                 {'x': ['Словесное сравнение (WER)', ' Символьное CER'], 'y': [0.3, 0.3], 'type': 'bar',
+#                  'name': 'Экспериментальное'},
+#             ],
+#             'layout': {
+#                 'title': 'Сравнение результатов распознавания'
+#             }
+#         }
+#
+#         return ref, exp_formatted, no_update, figure
+#     return no_update, no_update, dmc.Notification(
+#         id='notification',
+#         action='show',
+#         title='Invalid file format',
+#         message='Only PDF files are allowed. Please, try again',
+#         icon=DashIconify(icon='material-symbols:error-outline'),
+#         styles={
+#             'body': {'width': '100%'},
+#             'title': {'fontSize': '36sp'}
+#         }
+#     ), no_update
 
 
 if __name__ == '__main__':
