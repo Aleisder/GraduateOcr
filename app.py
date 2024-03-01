@@ -1,13 +1,11 @@
 import base64
 
+import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
-import pandas
-import plotly.express as px
-from dash import Dash, dcc, callback, Output, Input, no_update, State, html
+from dash import Dash, dcc, callback, Output, Input, no_update, State
 from dash.dcc import Loading
 from dash.exceptions import PreventUpdate
 from dash.html import Div
-from dash_bootstrap_components import Spinner
 from dash_iconify import DashIconify
 from pdf2image import convert_from_bytes
 
@@ -18,7 +16,7 @@ from ocr_modules.pytesseract_module import PytesseractModule
 from ocr_service import OcrService
 
 style = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = Dash(__name__)
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 ocr_service = OcrService(
     reference=PytesseractModule(),
@@ -31,9 +29,8 @@ app.layout = dmc.NotificationsProvider(
         className='main-container',
         children=[
             Div(id='notification-container'),
-            Spinner(id='loading-spinner'),
             Div(
-                id='border-containera',
+                id='manage-container',
                 className='border-container',
                 children=[
                     dmc.Group(
@@ -79,86 +76,53 @@ app.layout = dmc.NotificationsProvider(
                     Div(
                         className='border-container',
                         children=[
-                            dmc.Group(
-                                children=[
-                                    Div([
-                                        dmc.Group(
-                                            position='apart',
-                                            children=[
-                                                dmc.Text('Эталонное решение'),
-                                                cdc.CopyClipboardButton(
-                                                    component_id='test2',
-                                                    read_from_component_id='reference-text-div'
-                                                )
-                                            ]
-                                        ),
-                                        Div(
-                                            id='reference-text-div',
-                                            className='recognized-text-container'
-                                        )
-                                    ]),
-                                    Div(
-                                        children=[
-                                            dmc.Text('Экспериментальное решение'),
+                            dbc.Accordion([
+                                dbc.AccordionItem(
+                                    id='recognition-result-accordion-item',
+                                    children=[
+                                        dmc.Group([
+                                            Div([
+                                                dmc.Group(
+                                                    position='apart',
+                                                    children=[
+                                                        dmc.Text('Эталонное решение'),
+                                                        cdc.CopyClipboardButton(
+                                                            component_id='test2',
+                                                            read_from_component_id='reference-text-div'
+                                                        )
+                                                    ]
+                                                ),
+                                                cdc.TextContainer('reference-text-div')
+                                            ]),
                                             Div(
-                                                id='experimental-text-div',
-                                                className='recognized-text-container'
+                                                children=[
+                                                    dmc.Text('Экспериментальное решение'),
+                                                    cdc.TextContainer('experimental-text-div')
+                                                ]
                                             )
-                                        ]
-                                    )
-                                ],
-                                spacing=20,
-                                align='center',
-                                grow=True
-                            ),
-                            dcc.Graph(
-                                id='cer-wer-histogram',
-                                # figure={
-                                #     'data': [
-                                #         {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
-                                #         {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': 'Montréal'},
-                                #     ],
-                                #     'layout': {
-                                #         'title': 'Dash Data Visualization'
-                                #     }
-                                # }
-                            ),
-                        ])
+                                        ])
 
-                ]
-            ),
-            Div(
-                id='assessment-container',
-                children=[
-                    dcc.Graph(
-                        id='sdfgsdfg',
-                        figure=px.line(
-                            data_frame=pandas.DataFrame(
-                                {
-                                    'Pages': [1, 2, 3, 4],
-                                    'CER': [0.76, 0.81, 0.91, 0.97]
-                                }
-                            ),
-                            x='Pages',
-                            y='CER',
-                        ),
-                        responsive=False
+                                    ],
+                                    title='Результаты распознания'
+                                ),
+                                dbc.AccordionItem(
+                                    id='general-analysis-accordion-item',
+                                    children=['Content 2'],
+                                    title='Общий анализ'
+                                ),
+                                dbc.AccordionItem(
+                                    id='page-analysis-accordion-item',
+                                    children=['Content 3'],
+                                    title='Анализ по страницам'
+                                )
+                            ])
+                        ]
                     ),
-                    dcc.Graph(
-                        figure=px.histogram(
-                            data_frame=pandas.DataFrame({
-                                'Pages': [1, 2, 3, 4],
-                                'CER': [0.76, 0.81, 0.91, 0.97]}
-                            ),
-                            x='Pages',
-                            y='CER',
-                            nbins=1
-                        )
-                    )
+                    dcc.Graph(id='cer-wer-histogram')
                 ]
             )
-
-        ])
+        ]
+    )
 )
 
 
