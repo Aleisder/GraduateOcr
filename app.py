@@ -2,6 +2,7 @@ import base64
 
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
+import pandas as pd
 from dash import Dash, dcc, callback, Output, Input, no_update, State
 from dash.dcc import Loading
 from dash.exceptions import PreventUpdate
@@ -10,13 +11,15 @@ from dash_iconify import DashIconify
 from pdf2image import convert_from_bytes
 
 import custom_dash_components as cdc
-import utils.colored_text_builder
+from assessment import AssessmentService
 from config import POPPLER_PATH
 from ocr_modules.pytesseract_module import PytesseractModule
 from ocr_service import OcrService
 
 style = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+
+assessment_service = AssessmentService()
 
 ocr_service = OcrService(
     reference=PytesseractModule(),
@@ -35,20 +38,14 @@ app.layout = dmc.NotificationsProvider(
                 children=[
                     dmc.Group(
                         [
-                            cdc.FileUpload(
-                                component_id='upload-data'
-                            ),
+                            cdc.FileUpload('upload-data'),
                             dmc.ActionIcon(
                                 id='delete-file-action-icon',
                                 children=[DashIconify(icon='streamline:delete-1-solid')]
                             ),
                             cdc.SelectOcrModule('ocr-modules-multi-select'),
                             cdc.SelectLanguage('document-language-radio-group'),
-                            dmc.Button(
-                                id='recognize-button',
-                                children='Начать распознание',
-                                rightIcon=DashIconify(icon='material-symbols:search')
-                            )
+                            cdc.StartRecognitionButton('recognize-button')
                         ]
                     )
                 ]
@@ -88,8 +85,46 @@ app.layout = dmc.NotificationsProvider(
                                 ),
                                 dbc.AccordionItem(
                                     id='general-analysis-accordion-item',
-                                    children=['Content 2'],
-                                    title='Общий анализ'
+                                    title='Общий анализ',
+                                    children=['Test']
+                                ),
+                                dbc.AccordionItem(
+                                    id='character-analysis-accordion-item',
+                                    title='Символьный анализ (CER)',
+                                    children=[
+                                        dmc.Paper(
+                                            shadow='lg',
+                                            radius='lg',
+                                            m='15px',
+                                            p='15px',
+                                            children=[
+                                                dmc.Grid([
+                                                    Div(style={
+                                                        'background': 'red',
+                                                        'width': '20px',
+                                                        'height': '20px',
+                                                        'border-radius': '7px',
+                                                        'margin': '10px'
+                                                    }),
+                                                    dmc.Text(' - все символы распознаны верно (100%)')
+                                                ]),
+                                                dmc.Grid([
+                                                    Div(style={
+                                                        'background': 'red',
+                                                        'width': '20px',
+                                                        'height': '20px',
+                                                        'border-radius': '7px'
+                                                    }),
+                                                    dmc.Text(' - все символы распознаны верно (100%)')
+                                                ])
+                                            ]
+                                        )
+                                    ]
+                                ),
+                                dbc.AccordionItem(
+                                    id='word-analysis-accordion-item',
+                                    title='Словесный анализ (WER)',
+                                    children=[]
                                 ),
                                 dbc.AccordionItem(
                                     id='page-analysis-accordion-item',
@@ -142,6 +177,7 @@ def update_button_state(value, file):
     Output('experimental-text-div', 'children'),
     Output('notification-container', 'children'),
     Output('cer-wer-histogram', 'figure'),
+    Output('character-analysis-accordion-item', 'children'),
     Input('recognize-button', 'n_clicks'),
     State('upload-data', 'contents'),
     State('upload-data', 'filename'),
@@ -152,7 +188,8 @@ def recognize_button_click(n_clicks, file, filename):
         raise PreventUpdate
     if 'pdf' in filename:
         ref, exp = parse_contents(file)
-        exp_formatted = utils.colored_text_builder.build_from_differ_compare(ref, exp)
+        exp_formatted = assessment_service.build_from_differ_compare(ref, exp)
+        char_analysis_df: pd.DataFrame = assessment_service.character_analysis(ref, exp)
         figure = {
             'data': [
                 {'x': ['Словесное сравнение (WER)', ' Символьное CER'], 'y': [1, 1], 'type': 'bar', 'name': 'Эталон'},
@@ -163,8 +200,10 @@ def recognize_button_click(n_clicks, file, filename):
                 'title': 'Сравнение результатов распознавания'
             }
         }
+        print(ref)
 
-        return ref, exp_formatted, no_update, figure
+        return ref, exp_formatted, no_update, figure, cdc.CharacterAnalysisTable(
+            component_id='character-analysis-table', df=char_analysis_df)
     return no_update, no_update, dmc.Notification(
         id='notification',
         action='show',
@@ -175,7 +214,7 @@ def recognize_button_click(n_clicks, file, filename):
             'body': {'width': '100%'},
             'title': {'fontSize': '36sp'}
         }
-    ), no_update
+    ), no_update, no_update
 
 
 if __name__ == '__main__':
