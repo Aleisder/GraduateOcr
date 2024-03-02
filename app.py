@@ -42,32 +42,15 @@ app.layout = dmc.NotificationsProvider(
                                 id='delete-file-action-icon',
                                 children=[DashIconify(icon='streamline:delete-1-solid')]
                             ),
-                            dmc.MultiSelect(
-                                id='ocr-modules-multi-select',
-                                label='Выберите OCR-инструменты',
-                                data=[
-                                    {'value': 'tesseract', 'label': 'Tesseract'},
-                                    {'value': 'keras', 'label': 'Keras'},
-                                    {'value': 'pyocr', 'label': 'PyOCR'},
-                                ],
-                                value=['tesseract']
-                            ),
-                            dmc.RadioGroup(
-                                id='document-language-radio-group',
-                                children=[
-                                    dmc.Radio('English', 'EN'),
-                                    dmc.Radio('Japanese', 'JPN'),
-                                    dmc.Radio('Chinese', 'CHI')
-                                ],
-                                label='Выберите язык документа',
-                                orientation='vertical'
-                            ),
+                            cdc.SelectOcrModule('ocr-modules-multi-select'),
+                            cdc.SelectLanguage('document-language-radio-group'),
                             dmc.Button(
                                 id='recognize-button',
                                 children='Начать распознание',
                                 rightIcon=DashIconify(icon='material-symbols:search')
                             )
-                        ])
+                        ]
+                    )
                 ]
             ),
             Loading(
@@ -94,12 +77,10 @@ app.layout = dmc.NotificationsProvider(
                                                 ),
                                                 cdc.TextContainer('reference-text-div')
                                             ]),
-                                            Div(
-                                                children=[
-                                                    dmc.Text('Экспериментальное решение'),
-                                                    cdc.TextContainer('experimental-text-div')
-                                                ]
-                                            )
+                                            Div([
+                                                dmc.Text('Экспериментальное решение'),
+                                                cdc.TextContainer('experimental-text-div')
+                                            ])
                                         ])
 
                                     ],

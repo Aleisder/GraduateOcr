@@ -11,16 +11,7 @@ src: url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..9
     width: 100%;
     margin: 0;
     left: 0;
-    right 0;
-}
-
-.flex-container {
-    display: flex
-}
-
-.flex-item {
-    align-content: center;
-    padding: 1.5em;
+    right: 0;
 }
 
 .icon-container {
