@@ -1,22 +1,21 @@
 import base64
-import string
 
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
-from pandas import DataFrame
-from dash import Dash, dcc, callback, Output, Input, no_update, State
+from dash import Dash, callback, Output, Input, no_update, State, dcc
 from dash.dcc import Loading
 from dash.exceptions import PreventUpdate
 from dash.html import Div, A
 from dash_iconify import DashIconify
+from pandas import DataFrame
 from pdf2image import convert_from_bytes
 
 import custom_dash_components as cdc
 from assessment import AssessmentService
 from config import POPPLER_PATH
-from utils.character_analysis_rows_builder import build_from_dataframe
 from ocr_modules.pytesseract_module import PytesseractModule
 from ocr_service import OcrService
+from utils.character_analysis_rows_builder import build_from_dataframe
 
 style = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -115,22 +114,78 @@ app.layout = dmc.NotificationsProvider(
                                                 cdc.AccuracyRadioGroup('accuracy-table-options-radio-group')
                                             ]
                                         ),
-                                        Loading(
-                                            id='table-loading',
+                                        Div(
+                                            style={
+                                                'margin-top': '25px',
+                                                'margin-bottom': '10px'
+                                            },
                                             children=[
-                                                dmc.Table(
-                                                    id='character-analysis-table',
-                                                    children=[],
-                                                    highlightOnHover=True,
-                                                    style={
-                                                        'display': 'block',
-                                                        'width': '100%',
-                                                        'overflow-x': 'auto'
-                                                    }
-                                                )
+                                                dmc.Menu([
+                                                    dmc.MenuTarget(dmc.Button('Скачать', variant='outline')),
+                                                    dmc.MenuDropdown([
+                                                        dmc.MenuLabel('Доступные форматы'),
+                                                        dmc.MenuItem(
+                                                            id='download-csv-menu-item',
+                                                            children=[
+                                                                dmc.Group([
+                                                                    dmc.Image(
+                                                                        src='/assets/icons/csv-icon.png',
+                                                                        width=25,
+                                                                        height=25
+                                                                    ),
+                                                                    dmc.Text(
+                                                                        children='.CSV',
+                                                                        weight=500
+                                                                    )
+                                                                ]),
+                                                                dcc.Download(id='download-csv')
+                                                            ]
+                                                        ),
+                                                        dmc.MenuDivider(),
+                                                        dmc.MenuItem(
+                                                            id='download-xlsx-menu-item',
+                                                            children=[
+                                                                dmc.Group([
+                                                                    dmc.Image(
+                                                                        src='/assets/icons/xlsx-icon.png',
+                                                                        width=25,
+                                                                        height=25
+                                                                    ),
+                                                                    dmc.Text(
+                                                                        children='.XLSX',
+                                                                        weight=500
+                                                                    )
+                                                                ]),
+                                                                dcc.Download(id='download-xlsx')
+                                                            ]
+                                                        ),
+                                                        dmc.MenuDivider(),
+                                                        dmc.MenuItem(
+                                                            id='download-json-menu-item',
+                                                            children=[
+                                                                dmc.Group([
+                                                                    dmc.Image(
+                                                                        src='/assets/icons/json-icon.png',
+                                                                        width=25,
+                                                                        height=25
+                                                                    ),
+                                                                    dmc.Text(
+                                                                        children='.JSON',
+                                                                        weight=500
+                                                                    )
+                                                                ]),
+                                                                dcc.Download(id='download-json')
+                                                            ]
+                                                        )
+                                                    ]),
+                                                ]),
                                             ]
+                                        ),
+                                        dmc.Table(
+                                            id='character-analysis-table',
+                                            className='accuracy-table',
+                                            highlightOnHover=True
                                         )
-
                                     ]
                                 ),
                                 dbc.AccordionItem(
@@ -191,6 +246,43 @@ def change_accuracy_option(value):
         return build_from_dataframe(df.query('accuracy == 100'))
     elif value == '0':
         return build_from_dataframe(df.query('accuracy == 0'))
+
+
+@callback(
+    Output('download-csv', 'data'),
+    Input('download-csv-menu-item', 'n_clicks'),
+    prevent_initial_call=True
+)
+def download_table_csv(_):
+    return dcc.send_data_frame(
+        writer=assessment_service.current_df.to_csv,
+        filename='character-analysis.csv'
+    )
+
+
+@callback(
+    Output('download-xlsx', 'data'),
+    Input('download-xlsx-menu-item', 'n_clicks'),
+    prevent_initial_call=True
+)
+def download_table_xlsx(_):
+    return dcc.send_data_frame(
+        writer=assessment_service.current_df.to_excel,
+        filename='character-analysis.xlsx',
+        sheet_name='table-1'
+    )
+
+
+@callback(
+    Output('download-json', 'data'),
+    Input('download-json-menu-item', 'n_clicks'),
+    prevent_initial_call=True
+)
+def download_json(_):
+    return dcc.send_string(
+        src=assessment_service.current_df.to_json,
+        filename='character-analysis.json',
+    )
 
 
 def parse_contents(file):
