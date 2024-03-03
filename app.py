@@ -13,6 +13,7 @@ from pdf2image import convert_from_bytes
 import custom_dash_components as cdc
 from assessment import AssessmentService
 from config import POPPLER_PATH
+from utils.character_analysis_rows_builder import build_from_dataframe
 from ocr_modules.pytesseract_module import PytesseractModule
 from ocr_service import OcrService
 
@@ -86,38 +87,23 @@ app.layout = dmc.NotificationsProvider(
                                 dbc.AccordionItem(
                                     id='general-analysis-accordion-item',
                                     title='Общий анализ',
-                                    children=['Test']
+                                    children=[]
                                 ),
                                 dbc.AccordionItem(
                                     id='character-analysis-accordion-item',
                                     title='Символьный анализ (CER)',
                                     children=[
-                                        dmc.Paper(
-                                            shadow='lg',
-                                            radius='lg',
-                                            m='15px',
-                                            p='15px',
-                                            children=[
-                                                dmc.Grid([
-                                                    Div(style={
-                                                        'background': 'red',
-                                                        'width': '20px',
-                                                        'height': '20px',
-                                                        'border-radius': '7px',
-                                                        'margin': '10px'
-                                                    }),
-                                                    dmc.Text(' - все символы распознаны верно (100%)')
-                                                ]),
-                                                dmc.Grid([
-                                                    Div(style={
-                                                        'background': 'red',
-                                                        'width': '20px',
-                                                        'height': '20px',
-                                                        'border-radius': '7px'
-                                                    }),
-                                                    dmc.Text(' - все символы распознаны верно (100%)')
-                                                ])
-                                            ]
+                                        cdc.CharacterAnalysisColorMetrics(),
+                                        cdc.SymbolTypeRadioGroup('character-table-options-radio-group'),
+                                        dmc.Table(
+                                            id='character-analysis-table',
+                                            children=[],
+                                            highlightOnHover=True,
+                                            style={
+                                                'display': 'block',
+                                                'width': '100%',
+                                                'overflow-x': 'auto'
+                                            }
                                         )
                                     ]
                                 ),
@@ -177,7 +163,7 @@ def update_button_state(value, file):
     Output('experimental-text-div', 'children'),
     Output('notification-container', 'children'),
     Output('cer-wer-histogram', 'figure'),
-    Output('character-analysis-accordion-item', 'children'),
+    Output('character-analysis-table', 'children'),
     Input('recognize-button', 'n_clicks'),
     State('upload-data', 'contents'),
     State('upload-data', 'filename'),
@@ -200,10 +186,9 @@ def recognize_button_click(n_clicks, file, filename):
                 'title': 'Сравнение результатов распознавания'
             }
         }
-        print(ref)
+        table_rows = build_from_dataframe(char_analysis_df)
 
-        return ref, exp_formatted, no_update, figure, cdc.CharacterAnalysisTable(
-            component_id='character-analysis-table', df=char_analysis_df)
+        return ref, exp_formatted, no_update, figure, table_rows
     return no_update, no_update, dmc.Notification(
         id='notification',
         action='show',

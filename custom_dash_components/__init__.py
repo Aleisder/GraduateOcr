@@ -1,8 +1,18 @@
-from .select_ocr_module import SelectOcrModule
-from .select_language import SelectLanguage
-from .start_recognition_button import StartRecognitionButton
-from .copy_to_clipboard import CopyClipboardButton
-from .file_upload import FileUpload
-from .bottom_notification import BottomNotification
-from .text_container import TextContainer
-from .character_anylysis_table import CharacterAnalysisTable
+# Imports for the common reusable components
+from custom_dash_components.common.bottom_notification import BottomNotification
+from custom_dash_components.common.color_metrics import ColorMetrics
+
+# Imports for the top manage panel
+from custom_dash_components.manage_panel.select_ocr_module import SelectOcrModule
+from custom_dash_components.manage_panel.select_language import SelectLanguage
+from custom_dash_components.manage_panel.start_recognition_button import StartRecognitionButton
+from custom_dash_components.manage_panel.file_upload import FileUpload
+
+# Imports for the recognition results container
+from custom_dash_components.recognition_results.copy_to_clipboard import CopyClipboardButton
+from custom_dash_components.recognition_results.text_container import TextContainer
+
+# Imports for the character analysis container
+from custom_dash_components.character_analysis.character_analysis_table import CharacterAnalysisTable
+from custom_dash_components.character_analysis.symbol_type_radio_group import SymbolTypeRadioGroup
+from custom_dash_components.character_analysis.character_analysis_color_metrics import CharacterAnalysisColorMetrics

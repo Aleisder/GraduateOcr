@@ -68,7 +68,7 @@ class CharacterAnalysisTable(dmc.Table):
         super().__init__([
             dmc.Table(
                 id=component_id,
-                children=header + body,
+                children=[],
                 highlightOnHover=True,
                 style={
                     'display': 'block',
