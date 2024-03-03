@@ -17,7 +17,7 @@ class FileUpload(dcc.Upload):
                 id=component_id,
                 children=html.Div([
                     'Перетащите файл или ',
-                    html.A('Выберите его', style={'color': '#119DFF'}),
+                    html.A('Выберите', style={'color': '#119DFF'}),
                 ]),
                 style={
                     'width': '250px',
@@ -44,9 +44,5 @@ class FileUpload(dcc.Upload):
                 raise PreventUpdate
             return dmc.Group([
                 DashIconify(icon='bi:check'),
-                dmc.Text(filename),
-                dmc.ActionIcon(
-                    id='delete-file-action-icon',
-                    children=[DashIconify(icon='streamline:delete-1-solid')]
-                )
+                dmc.Text(filename)
             ])

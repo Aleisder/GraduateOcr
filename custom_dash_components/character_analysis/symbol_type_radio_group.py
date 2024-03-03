@@ -6,7 +6,7 @@ class SymbolTypeRadioGroup(dmc.RadioGroup):
         super().__init__([
             dmc.RadioGroup(
                 id=component_id,
-                label='Выберите язык документа',
+                label='Отображать символы',
                 children=[
                     dmc.Radio('Все', 'all'),
                     dmc.Radio('Алфавит', 'letters'),
@@ -14,6 +14,7 @@ class SymbolTypeRadioGroup(dmc.RadioGroup):
                     dmc.Radio('Знаки препинания', 'punctuations'),
                     dmc.Radio('Специальные символы', 'specials'),
                 ],
-                orientation='horizontal'
+                value='all',
+                orientation='vertical'
             )
         ])

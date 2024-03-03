@@ -1,12 +1,13 @@
 import base64
+import string
 
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
-import pandas as pd
+from pandas import DataFrame
 from dash import Dash, dcc, callback, Output, Input, no_update, State
 from dash.dcc import Loading
 from dash.exceptions import PreventUpdate
-from dash.html import Div
+from dash.html import Div, A
 from dash_iconify import DashIconify
 from pdf2image import convert_from_bytes
 
@@ -20,6 +21,7 @@ from ocr_service import OcrService
 style = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
+character_analysis_df: DataFrame = DataFrame([0])
 assessment_service = AssessmentService()
 
 ocr_service = OcrService(
@@ -37,18 +39,29 @@ app.layout = dmc.NotificationsProvider(
                 id='manage-container',
                 className='border-container',
                 children=[
-                    dmc.Group(
-                        [
-                            cdc.FileUpload('upload-data'),
-                            dmc.ActionIcon(
-                                id='delete-file-action-icon',
-                                children=[DashIconify(icon='streamline:delete-1-solid')]
-                            ),
-                            cdc.SelectOcrModule('ocr-modules-multi-select'),
-                            cdc.SelectLanguage('document-language-radio-group'),
-                            cdc.StartRecognitionButton('recognize-button')
-                        ]
-                    )
+                    dmc.Group([
+                        cdc.FileUpload('upload-data'),
+                        dmc.ActionIcon(
+                            id='delete-file-action-icon',
+                            children=[DashIconify(icon='streamline:delete-1-solid')],
+                        ),
+                        dmc.MultiSelect(
+                            id='ocr-modules-multi-select',
+                            label='Выберите OCR-инструменты',
+                            data=[
+                                {'value': 'tesseract', 'label': 'Tesseract'},
+                                {'value': 'keras', 'label': 'Keras'},
+                                {'value': 'pyocr', 'label': 'PyOCR'},
+                            ],
+                            value=['tesseract']
+                        ),
+                        cdc.SelectLanguage('document-language-radio-group'),
+                        dmc.Button(
+                            id='recognize-button',
+                            children='Начать распознание',
+                            rightIcon=DashIconify(icon='material-symbols:search'),
+                        )
+                    ])
                 ]
             ),
             Loading(
@@ -94,17 +107,30 @@ app.layout = dmc.NotificationsProvider(
                                     title='Символьный анализ (CER)',
                                     children=[
                                         cdc.CharacterAnalysisColorMetrics(),
-                                        cdc.SymbolTypeRadioGroup('character-table-options-radio-group'),
-                                        dmc.Table(
-                                            id='character-analysis-table',
-                                            children=[],
-                                            highlightOnHover=True,
-                                            style={
-                                                'display': 'block',
-                                                'width': '100%',
-                                                'overflow-x': 'auto'
-                                            }
+                                        dmc.Group(
+                                            align='top',
+                                            children=[
+                                                cdc.SymbolTypeRadioGroup('character-table-options-radio-group'),
+                                                dmc.Divider(orientation='vertical', style={'margin': '8px'}),
+                                                cdc.AccuracyRadioGroup('accuracy-table-options-radio-group')
+                                            ]
+                                        ),
+                                        Loading(
+                                            id='table-loading',
+                                            children=[
+                                                dmc.Table(
+                                                    id='character-analysis-table',
+                                                    children=[],
+                                                    highlightOnHover=True,
+                                                    style={
+                                                        'display': 'block',
+                                                        'width': '100%',
+                                                        'overflow-x': 'auto'
+                                                    }
+                                                )
+                                            ]
                                         )
+
                                     ]
                                 ),
                                 dbc.AccordionItem(
@@ -119,13 +145,52 @@ app.layout = dmc.NotificationsProvider(
                                 )
                             ])
                         ]
-                    ),
-                    dcc.Graph(id='cer-wer-histogram')
+                    )
                 ]
             )
         ]
     )
 )
+
+
+@callback(
+    Output('upload-data', 'children', allow_duplicate=True),
+    Output('upload-data', 'contents'),
+    Input('delete-file-action-icon', 'n_clicks'),
+    prevent_initial_call=True
+)
+def delete_file(n_clicks):
+    if n_clicks is None:
+        raise PreventUpdate
+    return Div([
+        'Перетащите файл или ',
+        A('Выберите', style={'color': '#119DFF'}),
+    ]), None
+
+
+@callback(
+    Output('character-analysis-table', 'children', allow_duplicate=True),
+    Input('character-table-options-radio-group', 'value'),
+    prevent_initial_call=True
+)
+def change_symbol_type(value):
+    df = assessment_service.filter_by_symbol_type(value)
+    return build_from_dataframe(df)
+
+
+@callback(
+    Output('character-analysis-table', 'children', allow_duplicate=True),
+    Input('accuracy-table-options-radio-group', 'value'),
+    prevent_initial_call=True
+)
+def change_accuracy_option(value):
+    df = assessment_service.last_df.copy()
+    if value == 'any':
+        return build_from_dataframe(df)
+    elif value == '100':
+        return build_from_dataframe(df.query('accuracy == 100'))
+    elif value == '0':
+        return build_from_dataframe(df.query('accuracy == 0'))
 
 
 def parse_contents(file):
@@ -153,16 +218,13 @@ def parse_contents(file):
     State('upload-data', 'contents')
 )
 def update_button_state(value, file):
-    if file is None:
-        return True
-    return value is None
+    return value is None or file is None
 
 
 @callback(
     Output('reference-text-div', 'children'),
     Output('experimental-text-div', 'children'),
     Output('notification-container', 'children'),
-    Output('cer-wer-histogram', 'figure'),
     Output('character-analysis-table', 'children'),
     Input('recognize-button', 'n_clicks'),
     State('upload-data', 'contents'),
@@ -175,20 +237,10 @@ def recognize_button_click(n_clicks, file, filename):
     if 'pdf' in filename:
         ref, exp = parse_contents(file)
         exp_formatted = assessment_service.build_from_differ_compare(ref, exp)
-        char_analysis_df: pd.DataFrame = assessment_service.character_analysis(ref, exp)
-        figure = {
-            'data': [
-                {'x': ['Словесное сравнение (WER)', ' Символьное CER'], 'y': [1, 1], 'type': 'bar', 'name': 'Эталон'},
-                {'x': ['Словесное сравнение (WER)', ' Символьное CER'], 'y': [0.3, 0.3], 'type': 'bar',
-                 'name': 'Экспериментальное'},
-            ],
-            'layout': {
-                'title': 'Сравнение результатов распознавания'
-            }
-        }
+        char_analysis_df: DataFrame = assessment_service.character_analysis(ref, exp)
         table_rows = build_from_dataframe(char_analysis_df)
 
-        return ref, exp_formatted, no_update, figure, table_rows
+        return ref, exp_formatted, no_update, table_rows
     return no_update, no_update, dmc.Notification(
         id='notification',
         action='show',
@@ -199,7 +251,7 @@ def recognize_button_click(n_clicks, file, filename):
             'body': {'width': '100%'},
             'title': {'fontSize': '36sp'}
         }
-    ), no_update, no_update
+    ), no_update
 
 
 if __name__ == '__main__':

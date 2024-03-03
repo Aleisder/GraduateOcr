@@ -19,10 +19,12 @@ class ColorMetrics(dmc.Paper):
                                     'background': value['color'],
                                     'width': '20px',
                                     'height': '20px',
-                                    'border-radius': '7px',
+                                    'border-radius': '7px'
                                 }
                             ),
-                            dmc.Text(children=value['metric'])
+                            dmc.Text(
+                                children=value['metric']
+                            )
                         ]
                     ) for value in metrics
                 ]

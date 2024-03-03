@@ -1,3 +1,4 @@
+import string
 from difflib import Differ
 from dash.html import Span
 import pandas as pd
@@ -6,6 +7,9 @@ import pandas as pd
 class AssessmentService:
 
     def __init__(self):
+        self.punctuations = list(',;:.?!-()\'\"')
+        self.specials = list('~+[\\@^{%*|&<`}_=]>#$/')
+        self.last_df: pd.DataFrame = pd.DataFrame([0])
         self.differ = Differ()
 
     def build_from_differ_compare(self, reference: str, hypothesis: str) -> list[Span]:
@@ -55,7 +59,22 @@ class AssessmentService:
             arr.append([key, found, actually, accuracy])
 
         df = pd.DataFrame(data=arr, columns=['char', 'found', 'actually', 'accuracy']).sort_values('char')
+        self.last_df = df.copy()
         return df
+
+    def filter_by_symbol_type(self, option: str):
+        match option:
+            case 'all':
+                return self.last_df
+            case 'letters':
+                return self.last_df[self.last_df['char'].isin(list(string.ascii_letters))]
+            case 'numbers':
+                return self.last_df[self.last_df['char'].isin(list(string.digits))]
+            case 'punctuations':
+                return self.last_df[self.last_df['char'].isin(self.punctuations)]
+            case 'specials':
+                return self.last_df[self.last_df['char'].isin(self.specials)]
+
 
 
 reference = '''
