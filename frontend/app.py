@@ -1,5 +1,3 @@
-import base64
-
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from dash import Dash, callback, Output, Input, no_update, State, dcc
@@ -8,15 +6,11 @@ from dash.exceptions import PreventUpdate
 from dash.html import Div, A
 from dash_iconify import DashIconify
 from pandas import DataFrame
-from pdf2image import convert_from_bytes
 
 import custom_dash_components as cdc
-from assessment import AssessmentService
-from config import POPPLER_PATH
-from ocr_modules.pytesseract_module import PytesseractModule
-from ocr_service import OcrService
-from utils.character_analysis_rows_builder import build_from_dataframe
 from api import OcrApi
+from assessment import AssessmentService
+from utils.character_analysis_rows_builder import build_from_dataframe
 
 style = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -24,11 +18,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 character_analysis_df: DataFrame = DataFrame([0])
 assessment_service = AssessmentService()
 
-ocr_service = OcrService(
-    reference=PytesseractModule(),
-    experimental=PytesseractModule()
-)
-
+api = OcrApi()
 
 
 app.layout = dmc.NotificationsProvider(
@@ -293,24 +283,8 @@ def parse_contents(file, lang):
     if file is None:
         raise PreventUpdate
 
-    print(type(file))
-    content_type, content_string = file.split(',')
-    decoded = base64.b64decode(content_string)
-
-    api = OcrApi()
-    print(api.recognise(content_string))
-
-    images = convert_from_bytes(
-        pdf_file=decoded,
-        poppler_path=POPPLER_PATH
-    )
-    reference, experimental = '', ''
-
-    for image in images:
-        ref_page, exp_page = ocr_service.get_recognitions(image, lang)
-        reference += ''.join(ref_page)
-        experimental += ''.join(exp_page)
-    return reference, experimental
+    _, content_string = file.split(',')
+    return api.recognise(content_string)
 
 
 @callback(

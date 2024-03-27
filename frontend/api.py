@@ -13,10 +13,11 @@ class OcrApi:
         r = requests.get(
             url=self.BASE_URL + '/recognition',
             headers={'content_type': 'application/json'},
-            json=file_str
+            data=file_str
         )
 
         if r.status_code != 200:
             return 'error', 'error'
 
-        return r.text, 'k'
+        ref, exp = r.text.split('|')
+        return ref, exp
