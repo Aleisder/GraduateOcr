@@ -1,5 +1,5 @@
 .wrong-symbol {
-    background-color: #FFBBAE;
+    background-color: #FFE65F;
     padding: 2px;
 }
 
@@ -9,6 +9,6 @@
 }
 
 .missed-symbol {
-    background-color: #DEDEDE;
+    background-color: #FFBBAE;
     padding: 2px;
 }

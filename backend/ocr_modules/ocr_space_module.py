@@ -1,9 +1,8 @@
 import requests
-from frontend.config import OCR_SPACE_API_KEY
 
 body = {
     'isOverlayRequired': 'false',
-    'apikey': OCR_SPACE_API_KEY,
+    'apikey': 'OCR_SPACE_API_KEY',
     'language': 'jpn'
 }
 

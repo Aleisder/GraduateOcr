@@ -7,19 +7,6 @@ def build_from_dataframe(df: pd.DataFrame):
 
     column_names = ['Символ', 'Найдено в тексте', 'Фактически в тексте', 'Точность, %']
 
-    # header = [
-    #     html.Thead(
-    #         html.Tr(
-    #             [
-    #                 html.Th('Символ'),
-    #                 html.Th('Найдено совпадений'),
-    #                 html.Th('Всего в тексте'),
-    #                 html.Th('Точность, %')
-    #             ]
-    #         )
-    #     )
-    # ]
-
     header = [Thead(Tr([Th(name) for name in column_names]))]
 
     rows = []

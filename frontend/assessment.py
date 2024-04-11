@@ -1,7 +1,8 @@
 import string
 from difflib import Differ
-from dash.html import Span
+from dash.html import Span, Thead, Tr, Th, Td, Tbody, Br
 import pandas as pd
+import dash_mantine_components as dmc
 
 
 class AssessmentService:
@@ -13,18 +14,74 @@ class AssessmentService:
         self.current_df: pd.DataFrame = pd.DataFrame([0])
         self.differ = Differ()
 
-    def build_from_differ_compare(self, reference: str, hypothesis: str) -> list[Span]:
-        diff = self.differ.compare(reference, hypothesis)
+    def experimental_span_formatted(self, reference: list[list[str]], hypothesis: list[list[str]]) -> list[Span]:
         children = []
-        for symbol in diff:
-            if symbol[0] == '+':
-                class_name = 'wrong-symbol'
-            elif symbol[0] == '-':
-                class_name = 'missed-symbol'
-            else:
-                class_name = 'correct-symbol'
-            children.append(Span(children=symbol[-1], className=class_name))
+        for i in range(len(reference)):
+            for j in range(len(reference[i])):
+                diff = self.differ.compare(reference[i][j], hypothesis[i][j])
+                for symbol in diff:
+                    if symbol[0] == '+':
+                        class_name = 'wrong-symbol'
+                    elif symbol[0] == '-':
+                        class_name = 'missed-symbol'
+                    else:
+                        class_name = 'correct-symbol'
+                    children.append(Span(children=symbol[-1], className=class_name))
+                children.append(Br())
         return children
+
+    def build_two_columns(self, ref: list[list[str]], exp: list[list[str]]):
+
+        children_ref = []
+        children_exp = []
+
+        for i in range(0, len(ref)):
+            for j in range(0, len(ref[i])):
+                first = ref[i][j]
+                second = exp[i][j]
+                diff = self.differ.compare(first, second)
+
+                curr_ref_line = []
+                curr_exp_line = []
+
+                for line in diff:
+                    sign = line[-1]
+
+                    if line[0] == '+':
+                        curr_exp_line.append(Span(sign, className='wrong-symbol'))
+                    elif line[0] == '-':
+                        curr_ref_line.append(Span(sign, className='missed-symbol'))
+                    else:
+                        curr_char = Span(sign)
+                        curr_exp_line.append(curr_char)
+                        curr_ref_line.append(curr_char)
+
+                children_ref.append(curr_ref_line)
+                children_exp.append(curr_exp_line)
+
+        column_names = ['Оригинальный текст', 'Распознанный текст']
+
+        header = [Thead(Tr([Th(name) for name in column_names]))]
+
+        for i in range(0, len(children_ref)):
+            counter = dmc.Kbd(str(i + 1))
+            children_ref[i] = [counter] + ['    '] + children_ref[i]
+            children_exp[i] = [counter] + ['    '] + children_exp[i]
+
+        rows = []
+
+        for i in range(0, len(children_ref)):
+
+            rows.append(
+                Tr(
+                    [
+                        Td(children_ref[i]),
+                        Td(children_exp[i])
+                    ]
+                )
+            )
+        body = [Tbody(rows)]
+        return header + body
 
     def character_analysis(self, reference: str, hypothesis: str):
         diff = self.differ.compare(reference, hypothesis)
@@ -64,7 +121,8 @@ class AssessmentService:
         self.current_df = df.copy()
         return df
 
-    def filter_by_symbol_type(self, option: str):
+
+    def filter_by_symbol_type(self, option: str) -> pd.DataFrame:
         match option:
             case 'all':
                 self.current_df = self.last_df.copy()
@@ -77,57 +135,3 @@ class AssessmentService:
             case 'specials':
                 self.current_df = self.last_df[self.last_df['char'].isin(self.specials)]
         return self.current_df
-
-
-
-reference = '''
-What is Lorem Ipsum?
-
-Lorem Ipsum is simply dummy text of the printing and typesetting
-industry. Lorem Ipsum has been the industry's standard dummy
-text ever since the 1500s, when an unknown printer took a galley
-of type and scrambled it to make a type specimen book. It has
-survived not only five centuries, but also the leap into electronic
-typesetting, remaining essentially unchanged. It was popularised in
-the 1960s with the release of Letraset sheets containing Lorem
-Ipsum passages, and more recently with desktop publishing
-software like Aldus PageMaker including versions of Lorem Ipsum.
-
-Why do we use it?
-
-It is a long established fact that a reader will be distracted by the
-readable content of a page when looking at its layout. The point of
-using Lorem Ipsum is that it has a more-or-less normal distribution
-of letters, as opposed to using 'Content here, content here',
-making it look like readable English. Many desktop publishing
-packages and web page editors now use Lorem Ipsum as their
-default model text, and a search for 'lorem ipsum' will uncover
-many web sites still in their infancy. Various versions have evolved
-over the years, sometimes by accident, sometimes on purpose
-(injected humour and the like)'''
-hypo = '''
-What is Lorem Ipsum?
-
-Lorem Ipsum is simply dummy text of the printing and typesetting
-industry. Lorem Ipsum has been the industry's standard dummy
-text ever since the 1500s, when an unknown printer took a galley
-of type and scrambled it to make a type specimen book. It has
-survived not only five centuries, but also the leap into electronic
-typesetting, remaining essentially unchanged. It was popularised in
-the 1960s with the release of Letraset sheets containing Lorem
-Ipsum passages, and more recently with desktop publishing
-software like Aldus PageMaker including versions of Lorem Ipsum.
-
-Why do we use it?
-
-It is a long established fact that a reader will be distracted by the
-readable content of a page when looking at its layout. The point of
-using Lorem Ipsum is that it has a more-or-less normal distribution
-of letters, as opposed to using ‘Content here, content here’,
-making it look like readable English. Many desktop publishing
-packages and web page editors now use Lorem Ipsum as their
-default model text, and a search for ‘lorem ipsum’ will uncover
-many web sites still in their infancy. Various versions have evolved
-over the years, sometimes by accident, sometimes on purpose
-(injected humour and the like).
-'''

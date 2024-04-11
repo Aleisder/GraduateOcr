@@ -1,5 +1,4 @@
 import pytesseract as pyt
-from pytesseract import image_to_string
 
 from backend.config import TESSERACT_PATH, TESSERACT_CONFIG
 from backend.ocr_modules.abstract_ocr_module import AbstractOcrModule
@@ -12,7 +11,7 @@ class PytesseractModule(AbstractOcrModule):
 
     def recognize_text(self, image, lang) -> list[str]:
         return str(
-            image_to_string(
+            pyt.image_to_string(
                 image=image,
                 lang=lang,
                 config=self.config

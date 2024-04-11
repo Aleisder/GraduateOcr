@@ -6,26 +6,32 @@ from dash.exceptions import PreventUpdate
 from dash.html import Div, A
 from dash_iconify import DashIconify
 from pandas import DataFrame
+from dash import html
 
 import custom_dash_components as cdc
 from api import OcrApi
 from assessment import AssessmentService
 from utils.character_analysis_rows_builder import build_from_dataframe
+from utils.ui_helper import reference_text_span_formatted
+from utils.colors import Color
+from frontend.model import OcrDocument
 
-style = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = Dash(
+    name=__name__,
+    external_stylesheets=[dbc.themes.BOOTSTRAP]
+)
 
 character_analysis_df: DataFrame = DataFrame([0])
 assessment_service = AssessmentService()
 
 api = OcrApi()
 
-
 app.layout = dmc.NotificationsProvider(
     Div(
         id='main-container',
         className='main-container',
         children=[
+
             Div(id='notification-container'),
             Div(
                 id='manage-container',
@@ -67,6 +73,23 @@ app.layout = dmc.NotificationsProvider(
                                     id='recognition-result-accordion-item',
                                     children=[
                                         dmc.Group([
+                                            cdc.ColorMetrics(
+                                                metrics=[
+                                                    {'color': '#A2E0B2', 'metric': 'Символ распознан верно'},
+                                                ]
+                                            ),
+                                            cdc.ColorMetrics(
+                                                metrics=[
+                                                    {'color': '#FFE65F', 'metric': 'Пропущенный символ'},
+                                                ]
+                                            ),
+                                            cdc.ColorMetrics(
+                                                metrics=[
+                                                    {'color': '#FFBBAE', 'metric': 'Добавлен лишний символ'},
+                                                ]
+                                            )
+                                        ]),
+                                        dmc.Group([
                                             Div([
                                                 dmc.Group(
                                                     position='apart',
@@ -85,8 +108,17 @@ app.layout = dmc.NotificationsProvider(
                                                 cdc.TextContainer('experimental-text-div')
                                             ])
 
-                                        ])
-
+                                        ]),
+                                        cdc.ColorMetrics(
+                                            metrics=[
+                                                {'color': '#FFE65F', 'metric': 'Добавленный символ'},
+                                                {'color': '#FFBBAE', 'metric': 'Удаленный символ'}
+                                            ]
+                                        ),
+                                        dmc.Table(
+                                            id='recognition-result-table',
+                                            highlightOnHover=True
+                                        )
                                     ],
                                     title='Результаты распознания'
                                 ),
@@ -279,10 +311,9 @@ def download_json(_):
     )
 
 
-def parse_contents(file, lang):
+def parse_contents(file: str, lang):
     if file is None:
         raise PreventUpdate
-
     _, content_string = file.split(',')
     return api.recognise(content_string)
 
@@ -301,6 +332,7 @@ def update_button_state(value, file):
     Output('experimental-text-div', 'children'),
     Output('notification-container', 'children'),
     Output('character-analysis-table', 'children'),
+    Output('recognition-result-table', 'children'),
     Input('recognize-button', 'n_clicks'),
     State('upload-data', 'contents'),
     State('upload-data', 'filename'),
@@ -311,12 +343,24 @@ def recognize_button_click(n_clicks, file, filename, lang):
     if any([n_clicks, file, filename]) is None:
         raise PreventUpdate
     if 'pdf' in filename:
-        ref, exp = parse_contents(file, lang)
-        exp_formatted = assessment_service.build_from_differ_compare(ref, exp)
-        char_analysis_df: DataFrame = assessment_service.character_analysis(ref, exp)
+        _, content_string = file.split(',')
+
+        reference = api.reference_from_file(content_string)
+        experimental = api.experimental_from_file(content_string)
+
+        ocr_document = OcrDocument(reference, experimental)
+
+        ref_text, exp_text = ocr_document.to_plain_text()
+
+        char_analysis_df: DataFrame = assessment_service.character_analysis(ref_text, exp_text)
         table_rows = build_from_dataframe(char_analysis_df)
 
-        return ref, exp_formatted, no_update, table_rows
+        reference_formatted = reference_text_span_formatted(reference)
+        experimental_formatted = assessment_service.experimental_span_formatted(reference, experimental)
+
+        recognition_rows = assessment_service.build_two_columns(reference, experimental)
+
+        return reference_formatted, experimental_formatted, no_update, table_rows, recognition_rows
     return no_update, no_update, dmc.Notification(
         id='notification',
         action='show',
@@ -327,7 +371,7 @@ def recognize_button_click(n_clicks, file, filename, lang):
             'body': {'width': '100%'},
             'title': {'fontSize': '36sp'}
         }
-    ), no_update
+    ), no_update, no_update
 
 
 if __name__ == '__main__':
