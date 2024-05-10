@@ -32,6 +32,19 @@ app.layout = dmc.NotificationsProvider(
         className='main-container',
         children=[
 
+            # dmc.Image(
+            #     src='http://127.0.0.1:5000/image.png',
+            #     height=100,
+            #     width=100,
+            #     fit='obtain'
+            # ),
+            #
+            # html.Img(
+            #     id='html-image-test',
+            #     src='http://127.0.0.1:5000/image.png',
+            #     className='page-image'
+            # ),
+
             Div(id='notification-container'),
             Div(
                 id='manage-container',
@@ -70,54 +83,98 @@ app.layout = dmc.NotificationsProvider(
                         children=[
                             dbc.Accordion([
                                 dbc.AccordionItem(
+                                    id='document-pages-accordion-item',
+                                    title='Страницы документа',
+                                    children=[
+
+                                        dbc.Carousel(
+                                            items=[
+
+                                            ]
+
+                                        )
+                                    ]
+                                ),
+                                dbc.AccordionItem(
                                     id='recognition-result-accordion-item',
                                     children=[
-                                        dmc.Group([
-                                            cdc.ColorMetrics(
-                                                metrics=[
-                                                    {'color': '#A2E0B2', 'metric': 'Символ распознан верно'},
-                                                ]
-                                            ),
-                                            cdc.ColorMetrics(
-                                                metrics=[
-                                                    {'color': '#FFE65F', 'metric': 'Пропущенный символ'},
-                                                ]
-                                            ),
-                                            cdc.ColorMetrics(
-                                                metrics=[
-                                                    {'color': '#FFBBAE', 'metric': 'Добавлен лишний символ'},
-                                                ]
-                                            )
-                                        ]),
-                                        dmc.Group([
-                                            Div([
-                                                dmc.Group(
-                                                    position='apart',
+                                        dmc.Tabs(
+                                            color='#119DFF',
+                                            orientation='horizontal',
+                                            children=[
+                                                dmc.TabsList([
+                                                    dmc.Tab(
+                                                        children=[
+                                                            dmc.Group([
+                                                                dmc.Avatar(DashIconify(icon="radix-icons:star"),
+                                                                           color="blue", radius="xl"),
+                                                                dmc.Text("Текст целиком")
+                                                            ])
+                                                        ],
+                                                        value="full_text"
+                                                    ),
+                                                    dmc.Tab(
+                                                        children=[
+                                                            dmc.Group([
+                                                                dmc.Avatar(DashIconify(icon="ph:columns"),
+                                                                           color="blue", radius="xl"),
+                                                                dmc.Text("Построчно")
+                                                            ])
+                                                        ],
+                                                        value='by_line'
+                                                    ),
+                                                ]),
+                                                dmc.TabsPanel(
+                                                    value='full_text',
                                                     children=[
-                                                        dmc.Text('Эталонное решение'),
-                                                        cdc.CopyClipboardButton(
-                                                            component_id='test2',
-                                                            read_from_component_id='reference-text-div'
-                                                        )
+                                                        cdc.ColorMetrics(
+                                                            metrics=[
+                                                                {'color': '#A2E0B2',
+                                                                 'metric': 'Символ распознан верно'},
+                                                                {'color': '#FFE65F',
+                                                                 'metric': 'Пропущенный символ'},
+                                                                {'color': '#FFBBAE',
+                                                                 'metric': 'Добавлен лишний символ'},
+                                                            ]
+                                                        ),
+                                                        dmc.Group([
+                                                            Div([
+                                                                dmc.Group(
+                                                                    position='apart',
+                                                                    children=[
+                                                                        dmc.Text('Эталонное решение'),
+                                                                        cdc.CopyClipboardButton(
+                                                                            component_id='test2',
+                                                                            read_from_component_id='reference-text-div'
+                                                                        )
+                                                                    ]
+                                                                ),
+                                                                cdc.TextContainer('reference-text-div')
+                                                            ]),
+                                                            Div([
+                                                                dmc.Text('Экспериментальное решение'),
+                                                                cdc.TextContainer('experimental-text-div')
+                                                            ])
+
+                                                        ])
                                                     ]
                                                 ),
-                                                cdc.TextContainer('reference-text-div')
-                                            ]),
-                                            Div([
-                                                dmc.Text('Экспериментальное решение'),
-                                                cdc.TextContainer('experimental-text-div')
-                                            ])
-
-                                        ]),
-                                        cdc.ColorMetrics(
-                                            metrics=[
-                                                {'color': '#FFE65F', 'metric': 'Добавленный символ'},
-                                                {'color': '#FFBBAE', 'metric': 'Удаленный символ'}
+                                                dmc.TabsPanel(
+                                                    value='by_line',
+                                                    children=[
+                                                        cdc.ColorMetrics(
+                                                            metrics=[
+                                                                {'color': '#FFE65F', 'metric': 'Добавленный символ'},
+                                                                {'color': '#FFBBAE', 'metric': 'Удаленный символ'}
+                                                            ]
+                                                        ),
+                                                        dmc.Table(
+                                                            id='recognition-result-table',
+                                                            highlightOnHover=True
+                                                        )
+                                                    ]
+                                                )
                                             ]
-                                        ),
-                                        dmc.Table(
-                                            id='recognition-result-table',
-                                            highlightOnHover=True
                                         )
                                     ],
                                     title='Результаты распознания'
@@ -311,13 +368,6 @@ def download_json(_):
     )
 
 
-def parse_contents(file: str, lang):
-    if file is None:
-        raise PreventUpdate
-    _, content_string = file.split(',')
-    return api.recognise(content_string)
-
-
 @callback(
     Output('recognize-button', 'disabled'),
     Input('document-language-radio-group', 'value'),
@@ -327,10 +377,23 @@ def update_button_state(value, file):
     return value is None or file is None
 
 
+invalid_file_format_notification = dmc.Notification(
+    id='notification',
+    action='show',
+    title='Invalid file format',
+    message='Only PDF files are allowed. Please, try again',
+    icon=DashIconify(icon='material-symbols:error-outline'),
+    styles={
+        'body': {'width': '100%'},
+        'title': {'fontSize': '36sp'}
+    }
+)
+
+
 @callback(
     Output('reference-text-div', 'children'),
     Output('experimental-text-div', 'children'),
-    Output('notification-container', 'children'),
+    Output('notification-container', 'children', allow_duplicate=True),
     Output('character-analysis-table', 'children'),
     Output('recognition-result-table', 'children'),
     Input('recognize-button', 'n_clicks'),
@@ -342,36 +405,31 @@ def update_button_state(value, file):
 def recognize_button_click(n_clicks, file, filename, lang):
     if any([n_clicks, file, filename]) is None:
         raise PreventUpdate
-    if 'pdf' in filename:
-        _, content_string = file.split(',')
 
-        reference = api.reference_from_file(content_string)
-        experimental = api.experimental_from_file(content_string)
+    if 'pdf' not in filename:
+        return no_update, no_update, invalid_file_format_notification, no_update, no_update
 
-        ocr_document = OcrDocument(reference, experimental)
+    _, content_string = file.split(',')
 
-        ref_text, exp_text = ocr_document.to_plain_text()
+    reference = api.reference_from_file(content_string)
+    experimental = api.experimental_from_file(content_string, lang)
 
-        char_analysis_df: DataFrame = assessment_service.character_analysis(ref_text, exp_text)
-        table_rows = build_from_dataframe(char_analysis_df)
+    ocr_document = OcrDocument(reference, experimental)
 
-        reference_formatted = reference_text_span_formatted(reference)
-        experimental_formatted = assessment_service.experimental_span_formatted(reference, experimental)
+    ref_text, exp_text = ocr_document.to_plain_text()
 
-        recognition_rows = assessment_service.build_two_columns(reference, experimental)
+    char_analysis_df: DataFrame = assessment_service.character_analysis(ref_text, exp_text)
+    table_rows = build_from_dataframe(char_analysis_df)
 
-        return reference_formatted, experimental_formatted, no_update, table_rows, recognition_rows
-    return no_update, no_update, dmc.Notification(
-        id='notification',
-        action='show',
-        title='Invalid file format',
-        message='Only PDF files are allowed. Please, try again',
-        icon=DashIconify(icon='material-symbols:error-outline'),
-        styles={
-            'body': {'width': '100%'},
-            'title': {'fontSize': '36sp'}
-        }
-    ), no_update, no_update
+    reference_formatted = reference_text_span_formatted(reference)
+    experimental_formatted = assessment_service.experimental_span_formatted(reference, experimental)
+
+    recognition_rows = assessment_service.build_two_columns(reference, experimental)
+
+    images = api.get_images_by_document(content_string)
+    print(images)
+
+    return reference_formatted, experimental_formatted, no_update, table_rows, recognition_rows
 
 
 if __name__ == '__main__':

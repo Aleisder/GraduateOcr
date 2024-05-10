@@ -17,7 +17,7 @@ class OcrServiceAbstract(ABC):
         pass
 
     @abstractmethod
-    def get_experimental(self, file):
+    def get_experimental(self, image, lang):
         pass
 
     @abstractmethod
@@ -37,8 +37,8 @@ class OcrService(OcrServiceAbstract):
             document.append(rows)
         return document
 
-    def get_experimental(self, file) -> list[str]:
-        return self.experimental_module.recognize_text(file, 'jpn')
+    def get_experimental(self, image, lang) -> list[str]:
+        return self.experimental_module.recognize_text(image, 'jpn')
 
     def __init__(self, experimental: OcrModule):
         self.experimental_module = experimental

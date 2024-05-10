@@ -8,7 +8,7 @@ class SelectLanguage(dmc.RadioGroup):
                 id=component_id,
                 children=[
                     dmc.Radio('Японский', 'jpn'),
-                    dmc.Radio('Китайский', 'jpn'),
+                    dmc.Radio('Китайский', 'chi_sim'),
                 ],
                 label='Выберите язык документа',
                 orientation='vertical'

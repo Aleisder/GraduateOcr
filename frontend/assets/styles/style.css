@@ -30,6 +30,16 @@ src: url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..9
     margin: 30px;
 }
 
+.page-image {
+    width: 200px;
+    border-radius: 25%;
+}
+
+.page-image:hover {
+    opacity:1;
+    transition: 1s ease;
+}
+
 .recognized-text-container {
     min-height: 100px;
     max-height: 700px;

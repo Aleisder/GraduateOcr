@@ -8,21 +8,6 @@ class OcrApi:
         self.BASE_URL = 'http://127.0.0.1:5000'
         self.DEFAULT_HEADERS = {'content_type': 'application/json'}
 
-    def recognise(self, file_str: str) -> tuple[str, str]:
-        data = json.dumps({'file_bytes': file_str})
-
-        r = requests.get(
-            url=self.BASE_URL + '/recognition',
-            headers=self.DEFAULT_HEADERS,
-            data=file_str
-        )
-
-        if r.status_code != 200:
-            return 'error', 'error'
-
-        ref, exp = r.text.split('|')
-        return ref, exp
-
     def reference_from_file(self, file: str) -> list[list[str]]:
         json_data = json.dumps({'file': file})
         r = requests.get(
@@ -35,10 +20,10 @@ class OcrApi:
             document.append(page)
         return document
 
-    def experimental_from_file(self, file: str) -> list[list[str]]:
+    def experimental_from_file(self, file: str, lang: str) -> list[list[str]]:
         json_data = json.dumps({'file': file})
         r = requests.get(
-            url=self.BASE_URL + '/experimental',
+            url=self.BASE_URL + f'/experimental/{lang}',
             headers=self.DEFAULT_HEADERS,
             json=json_data
         )
@@ -46,3 +31,12 @@ class OcrApi:
         for page in r.json()['pages']:
             document.append(page)
         return document
+
+    def get_images_by_document(self, file: str) -> list[str]:
+        json_data = json.dumps({'file': file})
+        r = requests.get(
+            url=self.BASE_URL + '/pages',
+            headers=self.DEFAULT_HEADERS,
+            json=json_data
+        )
+        return r.json()
