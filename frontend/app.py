@@ -6,26 +6,45 @@ from dash.exceptions import PreventUpdate
 from dash.html import Div, A
 from dash_iconify import DashIconify
 from pandas import DataFrame
+from dash import html
 
 import custom_dash_components as cdc
 from api import OcrApi
 from assessment import AssessmentService
 from utils.character_analysis_rows_builder import build_from_dataframe
+from utils.ui_helper import reference_text_span_formatted
+from utils.colors import Color
+from frontend.model import OcrDocument
 
-style = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = Dash(
+    name=__name__,
+    external_stylesheets=[dbc.themes.BOOTSTRAP]
+)
 
 character_analysis_df: DataFrame = DataFrame([0])
 assessment_service = AssessmentService()
 
 api = OcrApi()
 
-
 app.layout = dmc.NotificationsProvider(
     Div(
         id='main-container',
         className='main-container',
         children=[
+
+            # dmc.Image(
+            #     src='http://127.0.0.1:5000/image.png',
+            #     height=100,
+            #     width=100,
+            #     fit='obtain'
+            # ),
+            #
+            # html.Img(
+            #     id='html-image-test',
+            #     src='http://127.0.0.1:5000/image.png',
+            #     className='page-image'
+            # ),
+
             Div(id='notification-container'),
             Div(
                 id='manage-container',
@@ -64,29 +83,99 @@ app.layout = dmc.NotificationsProvider(
                         children=[
                             dbc.Accordion([
                                 dbc.AccordionItem(
+                                    id='document-pages-accordion-item',
+                                    title='Страницы документа',
+                                    children=[
+
+                                        dbc.Carousel(
+                                            items=[
+
+                                            ]
+
+                                        )
+                                    ]
+                                ),
+                                dbc.AccordionItem(
                                     id='recognition-result-accordion-item',
                                     children=[
-                                        dmc.Group([
-                                            Div([
-                                                dmc.Group(
-                                                    position='apart',
+                                        dmc.Tabs(
+                                            color='#119DFF',
+                                            orientation='horizontal',
+                                            children=[
+                                                dmc.TabsList([
+                                                    dmc.Tab(
+                                                        children=[
+                                                            dmc.Group([
+                                                                dmc.Avatar(DashIconify(icon="radix-icons:star"),
+                                                                           color="blue", radius="xl"),
+                                                                dmc.Text("Текст целиком")
+                                                            ])
+                                                        ],
+                                                        value="full_text"
+                                                    ),
+                                                    dmc.Tab(
+                                                        children=[
+                                                            dmc.Group([
+                                                                dmc.Avatar(DashIconify(icon="ph:columns"),
+                                                                           color="blue", radius="xl"),
+                                                                dmc.Text("Построчно")
+                                                            ])
+                                                        ],
+                                                        value='by_line'
+                                                    ),
+                                                ]),
+                                                dmc.TabsPanel(
+                                                    value='full_text',
                                                     children=[
-                                                        dmc.Text('Эталонное решение'),
-                                                        cdc.CopyClipboardButton(
-                                                            component_id='test2',
-                                                            read_from_component_id='reference-text-div'
-                                                        )
+                                                        cdc.ColorMetrics(
+                                                            metrics=[
+                                                                {'color': '#A2E0B2',
+                                                                 'metric': 'Символ распознан верно'},
+                                                                {'color': '#FFE65F',
+                                                                 'metric': 'Пропущенный символ'},
+                                                                {'color': '#FFBBAE',
+                                                                 'metric': 'Добавлен лишний символ'},
+                                                            ]
+                                                        ),
+                                                        dmc.Group([
+                                                            Div([
+                                                                dmc.Group(
+                                                                    position='apart',
+                                                                    children=[
+                                                                        dmc.Text('Эталонное решение'),
+                                                                        cdc.CopyClipboardButton(
+                                                                            component_id='test2',
+                                                                            read_from_component_id='reference-text-div'
+                                                                        )
+                                                                    ]
+                                                                ),
+                                                                cdc.TextContainer('reference-text-div')
+                                                            ]),
+                                                            Div([
+                                                                dmc.Text('Экспериментальное решение'),
+                                                                cdc.TextContainer('experimental-text-div')
+                                                            ])
+
+                                                        ])
                                                     ]
                                                 ),
-                                                cdc.TextContainer('reference-text-div')
-                                            ]),
-                                            Div([
-                                                dmc.Text('Экспериментальное решение'),
-                                                cdc.TextContainer('experimental-text-div')
-                                            ])
-
-                                        ])
-
+                                                dmc.TabsPanel(
+                                                    value='by_line',
+                                                    children=[
+                                                        cdc.ColorMetrics(
+                                                            metrics=[
+                                                                {'color': '#FFE65F', 'metric': 'Добавленный символ'},
+                                                                {'color': '#FFBBAE', 'metric': 'Удаленный символ'}
+                                                            ]
+                                                        ),
+                                                        dmc.Table(
+                                                            id='recognition-result-table',
+                                                            highlightOnHover=True
+                                                        )
+                                                    ]
+                                                )
+                                            ]
+                                        )
                                     ],
                                     title='Результаты распознания'
                                 ),
@@ -279,14 +368,6 @@ def download_json(_):
     )
 
 
-def parse_contents(file, lang):
-    if file is None:
-        raise PreventUpdate
-
-    _, content_string = file.split(',')
-    return api.recognise(content_string)
-
-
 @callback(
     Output('recognize-button', 'disabled'),
     Input('document-language-radio-group', 'value'),
@@ -296,11 +377,25 @@ def update_button_state(value, file):
     return value is None or file is None
 
 
+invalid_file_format_notification = dmc.Notification(
+    id='notification',
+    action='show',
+    title='Invalid file format',
+    message='Only PDF files are allowed. Please, try again',
+    icon=DashIconify(icon='material-symbols:error-outline'),
+    styles={
+        'body': {'width': '100%'},
+        'title': {'fontSize': '36sp'}
+    }
+)
+
+
 @callback(
     Output('reference-text-div', 'children'),
     Output('experimental-text-div', 'children'),
-    Output('notification-container', 'children'),
+    Output('notification-container', 'children', allow_duplicate=True),
     Output('character-analysis-table', 'children'),
+    Output('recognition-result-table', 'children'),
     Input('recognize-button', 'n_clicks'),
     State('upload-data', 'contents'),
     State('upload-data', 'filename'),
@@ -310,24 +405,31 @@ def update_button_state(value, file):
 def recognize_button_click(n_clicks, file, filename, lang):
     if any([n_clicks, file, filename]) is None:
         raise PreventUpdate
-    if 'pdf' in filename:
-        ref, exp = parse_contents(file, lang)
-        exp_formatted = assessment_service.build_from_differ_compare(ref, exp)
-        char_analysis_df: DataFrame = assessment_service.character_analysis(ref, exp)
-        table_rows = build_from_dataframe(char_analysis_df)
 
-        return ref, exp_formatted, no_update, table_rows
-    return no_update, no_update, dmc.Notification(
-        id='notification',
-        action='show',
-        title='Invalid file format',
-        message='Only PDF files are allowed. Please, try again',
-        icon=DashIconify(icon='material-symbols:error-outline'),
-        styles={
-            'body': {'width': '100%'},
-            'title': {'fontSize': '36sp'}
-        }
-    ), no_update
+    if 'pdf' not in filename:
+        return no_update, no_update, invalid_file_format_notification, no_update, no_update
+
+    _, content_string = file.split(',')
+
+    reference = api.reference_from_file(content_string)
+    experimental = api.experimental_from_file(content_string, lang)
+
+    ocr_document = OcrDocument(reference, experimental)
+
+    ref_text, exp_text = ocr_document.to_plain_text()
+
+    char_analysis_df: DataFrame = assessment_service.character_analysis(ref_text, exp_text)
+    table_rows = build_from_dataframe(char_analysis_df)
+
+    reference_formatted = reference_text_span_formatted(reference)
+    experimental_formatted = assessment_service.experimental_span_formatted(reference, experimental)
+
+    recognition_rows = assessment_service.build_two_columns(reference, experimental)
+
+    images = api.get_images_by_document(content_string)
+    print(images)
+
+    return reference_formatted, experimental_formatted, no_update, table_rows, recognition_rows
 
 
 if __name__ == '__main__':
