@@ -71,8 +71,9 @@ def store_images():
     )
     # список для хранения URL-адресов изображений
     urls = []
-    buffer = io.BytesIO()
+
     for image in images:
+        buffer = io.BytesIO()
         # сохранение изображения в буфер
         image.save(buffer, format='PNG')
         # создание генерация названия файла в формате "YYYY-mm-dd-HH-MM-SS.png"

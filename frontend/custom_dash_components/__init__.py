@@ -1,6 +1,7 @@
 # Imports for the common reusable components
 from frontend.custom_dash_components.common.color_metrics import ColorMetrics
 from frontend.custom_dash_components.common.bottom_notification import BottomNotification
+from frontend.custom_dash_components.recognition_results.ocr_image_drawer import OcrPageDrawer
 
 # Imports for the top manage panel
 from frontend.custom_dash_components.manage_panel.file_upload import FileUpload

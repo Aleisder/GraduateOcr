@@ -8,11 +8,7 @@ from dash_iconify import DashIconify
 class CopyClipboardButton(dmc.ActionIcon):
     props = dict()
 
-    def __init__(
-            self,
-            component_id: str,
-            read_from_component_id: str
-    ):
+    def __init__(self, component_id: str, read_from_component_id: str):
         self.props['id'] = component_id
         self.props['read_from'] = read_from_component_id
 

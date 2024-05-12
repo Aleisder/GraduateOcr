@@ -1,14 +1,14 @@
 .wrong-symbol {
     background-color: #FFE65F;
-    padding: 2px;
+    padding: 1px;
 }
 
 .correct-symbol {
     background-color: #A2E0B2;
-    padding: 2px;
+    padding: 1px;
 }
 
 .missed-symbol {
     background-color: #FFBBAE;
-    padding: 2px;
+    padding: 1px;
 }

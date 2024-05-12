@@ -39,4 +39,6 @@ class OcrApi:
             headers=self.DEFAULT_HEADERS,
             json=json_data
         )
-        return r.json()
+        json_body: dict = r.json()
+        urls = json_body['images']
+        return urls

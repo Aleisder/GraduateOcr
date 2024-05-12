@@ -1,20 +1,19 @@
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from dash import Dash, callback, Output, Input, no_update, State, dcc
+from dash import html
 from dash.dcc import Loading
 from dash.exceptions import PreventUpdate
 from dash.html import Div, A
 from dash_iconify import DashIconify
 from pandas import DataFrame
-from dash import html
 
 import custom_dash_components as cdc
 from api import OcrApi
 from assessment import AssessmentService
-from utils.character_analysis_rows_builder import build_from_dataframe
-from utils.ui_helper import reference_text_span_formatted
-from utils.colors import Color
 from frontend.model import OcrDocument
+from utils.character_analysis_rows_builder import build_from_dataframe
+from utils.ui_helper import reference_text_span_formatted, image_card_from_url
 
 app = Dash(
     name=__name__,
@@ -31,20 +30,9 @@ app.layout = dmc.NotificationsProvider(
         id='main-container',
         className='main-container',
         children=[
-
-            # dmc.Image(
-            #     src='http://127.0.0.1:5000/image.png',
-            #     height=100,
-            #     width=100,
-            #     fit='obtain'
-            # ),
-            #
-            # html.Img(
-            #     id='html-image-test',
-            #     src='http://127.0.0.1:5000/image.png',
-            #     className='page-image'
-            # ),
-
+            # окно слева для отображения страниц документа
+            dmc.Drawer(id='page-drawer', size='60%'),
+            # контейнер для отображения уведомлений
             Div(id='notification-container'),
             Div(
                 id='manage-container',
@@ -85,15 +73,7 @@ app.layout = dmc.NotificationsProvider(
                                 dbc.AccordionItem(
                                     id='document-pages-accordion-item',
                                     title='Страницы документа',
-                                    children=[
-
-                                        dbc.Carousel(
-                                            items=[
-
-                                            ]
-
-                                        )
-                                    ]
+                                    children=[dmc.Center(id='pages-container')]
                                 ),
                                 dbc.AccordionItem(
                                     id='recognition-result-accordion-item',
@@ -101,6 +81,7 @@ app.layout = dmc.NotificationsProvider(
                                         dmc.Tabs(
                                             color='#119DFF',
                                             orientation='horizontal',
+                                            value='full_text',
                                             children=[
                                                 dmc.TabsList([
                                                     dmc.Tab(
@@ -272,11 +253,6 @@ app.layout = dmc.NotificationsProvider(
                                     ]
                                 ),
                                 dbc.AccordionItem(
-                                    id='word-analysis-accordion-item',
-                                    title='Словесный анализ (WER)',
-                                    children=[]
-                                ),
-                                dbc.AccordionItem(
                                     id='page-analysis-accordion-item',
                                     children=['Content 3'],
                                     title='Анализ по страницам'
@@ -396,6 +372,7 @@ invalid_file_format_notification = dmc.Notification(
     Output('notification-container', 'children', allow_duplicate=True),
     Output('character-analysis-table', 'children'),
     Output('recognition-result-table', 'children'),
+    Output('pages-container', 'children'),
     Input('recognize-button', 'n_clicks'),
     State('upload-data', 'contents'),
     State('upload-data', 'filename'),
@@ -407,7 +384,7 @@ def recognize_button_click(n_clicks, file, filename, lang):
         raise PreventUpdate
 
     if 'pdf' not in filename:
-        return no_update, no_update, invalid_file_format_notification, no_update, no_update
+        return no_update, no_update, invalid_file_format_notification, no_update, no_update, no_update
 
     _, content_string = file.split(',')
 
@@ -426,10 +403,10 @@ def recognize_button_click(n_clicks, file, filename, lang):
 
     recognition_rows = assessment_service.build_two_columns(reference, experimental)
 
-    images = api.get_images_by_document(content_string)
-    print(images)
+    urls = api.get_images_by_document(content_string)
 
-    return reference_formatted, experimental_formatted, no_update, table_rows, recognition_rows
+    images = dmc.Group([image_card_from_url(url, 'page-drawer') for url in urls])
+    return reference_formatted, experimental_formatted, no_update, table_rows, recognition_rows, images
 
 
 if __name__ == '__main__':
