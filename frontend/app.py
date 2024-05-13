@@ -1,7 +1,6 @@
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
-from dash import Dash, callback, Output, Input, no_update, State, dcc
-from dash import html
+from dash import Dash, callback, Output, Input, no_update, State, dcc, MATCH, html
 from dash.dcc import Loading
 from dash.exceptions import PreventUpdate
 from dash.html import Div, A
@@ -30,8 +29,16 @@ app.layout = dmc.NotificationsProvider(
         id='main-container',
         className='main-container',
         children=[
+
+            html.Img(
+                id={
+                    'type': 'clickable_image',
+                    'index': 'n_clicks'
+                }
+            ),
+
             # окно слева для отображения страниц документа
-            dmc.Drawer(id='page-drawer', size='60%'),
+
             # контейнер для отображения уведомлений
             Div(id='notification-container'),
             Div(
@@ -57,7 +64,7 @@ app.layout = dmc.NotificationsProvider(
                         cdc.SelectLanguage('document-language-radio-group'),
                         dmc.Button(
                             id='recognize-button',
-                            children='Начать распознание',
+                            children='Начать распознавание',
                             rightIcon=DashIconify(icon='material-symbols:search'),
                         )
                     ])
@@ -158,12 +165,7 @@ app.layout = dmc.NotificationsProvider(
                                             ]
                                         )
                                     ],
-                                    title='Результаты распознания'
-                                ),
-                                dbc.AccordionItem(
-                                    id='general-analysis-accordion-item',
-                                    title='Общий анализ',
-                                    children=[]
+                                    title='Результаты распознавания'
                                 ),
                                 dbc.AccordionItem(
                                     id='character-analysis-accordion-item',
@@ -251,11 +253,6 @@ app.layout = dmc.NotificationsProvider(
                                             highlightOnHover=True
                                         )
                                     ]
-                                ),
-                                dbc.AccordionItem(
-                                    id='page-analysis-accordion-item',
-                                    children=['Content 3'],
-                                    title='Анализ по страницам'
                                 )
                             ])
                         ]
@@ -405,8 +402,45 @@ def recognize_button_click(n_clicks, file, filename, lang):
 
     urls = api.get_images_by_document(content_string)
 
-    images = dmc.Group([image_card_from_url(url, 'page-drawer') for url in urls])
+    images = dmc.Group([image_card_from_url(url, i) for (i, url) in enumerate(urls)])
     return reference_formatted, experimental_formatted, no_update, table_rows, recognition_rows, images
+
+
+@callback(
+    Output({'type': 'page-drawer-image', 'index': MATCH}, 'src', allow_duplicate=True),
+    Output({'type': 'page-drawer', 'index': MATCH}, 'opened'),
+    Input({'type': 'clickable_image', 'index': MATCH}, 'n_clicks'),
+    State({'type': 'clickable_image', 'index': MATCH}, 'src'),
+    prevent_initial_call='initial_duplicate'
+)
+def open_drawer(n_clicks, url):
+    print(n_clicks)
+    if n_clicks is None:
+        raise PreventUpdate
+    return url, True
+
+
+@callback(
+    Output({'type': 'page-drawer-image', 'index': MATCH}, 'src', allow_duplicate=True),
+    Input({'type': 'show-borders-switch', 'index': MATCH}, 'checked'),
+    State({'type': 'page-drawer-image', 'index': MATCH}, 'src'),
+    prevent_initial_call='initial_duplicate'
+)
+def show_symbols_borders(checked: bool, url: str):
+    if checked:
+        return url[:-4] + '-bordered.png'
+    return url[:-13] + '.png'
+
+
+@callback(
+    Output({'type': 'page-download', 'index': MATCH}, 'data'),
+    Input({'type': 'download-image-action-icon', 'index': MATCH}, 'n_clicks'),
+    State({'type': 'page-drawer-image', 'index': MATCH}, 'src')
+)
+def download_page(n_clicks, url):
+    if n_clicks is None:
+        raise PreventUpdate
+    return dcc.send_file(url)
 
 
 if __name__ == '__main__':

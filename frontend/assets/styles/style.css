@@ -49,3 +49,11 @@ src: url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..9
     overflow-x: hidden;
     overflow-y: auto;
 }
+
+.page-image-preview {
+    transition: transform .2s;
+}
+
+.page-image-preview:hover {
+  transform: scale(1.2); /* 120% zoom */
+}

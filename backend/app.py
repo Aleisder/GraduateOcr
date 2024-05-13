@@ -77,10 +77,16 @@ def store_images():
         # сохранение изображения в буфер
         image.save(buffer, format='PNG')
         # создание генерация названия файла в формате "YYYY-mm-dd-HH-MM-SS.png"
-        filename = datetime.now().strftime('%Y-%m-%d-%H-%M-%S-%f') + '.png'
+        filename = datetime.now().strftime('%Y-%m-%d-%H-%M-%S-%f')
         # загрузка изображения в MinIO и получение URL-адреса
-        url = repository.upload_image(filename, buffer.getvalue())
+        url = repository.upload_image(filename + '.png', buffer.getvalue())
         urls.append(url)
+
+        # создание изображения с отмеченными символами
+        image_with_borders = ocr_service.get_bordered_image(buffer.getvalue())
+        # сохранение изображения с отмеченными символами в MinIO
+        repository.upload_image(filename + '-bordered.png', image_with_borders)
+
     # возвращаем клиенту ссылки на изображения в формате JSON
     return jsonify(images=urls)
 

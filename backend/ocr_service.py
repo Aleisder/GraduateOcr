@@ -1,31 +1,11 @@
 import base64
 import io
-from abc import ABC, abstractmethod
 from pypdf import PdfReader
 
-
-class OcrModule(ABC):
-    @abstractmethod
-    def recognize_text(self, image, lang) -> list[str]:
-        pass
+from backend.ocr_modules.abstract_ocr_module import AbstractOcrModule
 
 
-class OcrServiceAbstract(ABC):
-
-    @abstractmethod
-    def get_reference(self, file: str):
-        pass
-
-    @abstractmethod
-    def get_experimental(self, image, lang):
-        pass
-
-    @abstractmethod
-    def set_experimental_ocr_module(self, module: OcrModule):
-        pass
-
-
-class OcrService(OcrServiceAbstract):
+class OcrService:
 
     def get_reference(self, file: str) -> list[list[str]]:
         decoded: bytes = base64.b64decode(file)
@@ -37,16 +17,14 @@ class OcrService(OcrServiceAbstract):
             document.append(rows)
         return document
 
-    def get_experimental(self, image, lang) -> list[str]:
-        return self.experimental_module.recognize_text(image, 'jpn')
+    def get_bordered_image(self, image: bytes) -> bytes:
+        return self.experimental_module.mark_symbols_with_borders(image)
 
-    def __init__(self, experimental: OcrModule):
+    def get_experimental(self, image, lang) -> list[str]:
+        return self.experimental_module.recognize_text(image, lang)
+
+    def __init__(self, experimental: AbstractOcrModule):
         self.experimental_module = experimental
 
-    def get_recognitions(self, image, lang) -> tuple[list[str], list[str]]:
-
-        experimental = self.experimental_module.recognize_text(image, lang)
-        return ['test'], experimental
-
-    def set_experimental_ocr_module(self, module: OcrModule):
+    def set_experimental_ocr_module(self, module: AbstractOcrModule):
         self.experimental_module = module
