@@ -15,13 +15,13 @@ class MinioRepository:
     def __init__(self):
         # создаем подключение к MinIO
         self.client = Minio(
-            endpoint=os.getenv('SERVER'),
-            access_key=os.getenv('ACCESS_KEY'),
-            secret_key=os.getenv('SECRET_KEY'),
+            endpoint=os.getenv('MINIO_SERVER'),
+            access_key=os.getenv('MINIO_ACCESS_KEY'),
+            secret_key=os.getenv('MINIO_SECRET_KEY'),
             secure=False
         )
         # указываем имя бакета, в котором хранятся файлы
-        self.bucket_name = os.getenv('BUCKET_NAME')
+        self.bucket_name = os.getenv('MINIO_BUCKET_NAME')
 
         # если бакета не существует, то создаем его
         if not self.client.bucket_exists(self.bucket_name):

@@ -98,3 +98,7 @@ def get_image(filename):
     image: io.BytesIO = repository.get_image(filename)
     # отправка файла клиенту
     return send_file(path_or_file=image, mimetype='image/png')
+
+
+if __name__ == '__main__':
+    app.run()

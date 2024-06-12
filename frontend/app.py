@@ -29,16 +29,6 @@ app.layout = dmc.NotificationsProvider(
         id='main-container',
         className='main-container',
         children=[
-
-            html.Img(
-                id={
-                    'type': 'clickable_image',
-                    'index': 'n_clicks'
-                }
-            ),
-
-            # окно слева для отображения страниц документа
-
             # контейнер для отображения уведомлений
             Div(id='notification-container'),
             Div(
